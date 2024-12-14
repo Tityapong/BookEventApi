@@ -1,6 +1,6 @@
 const express = require('express');
 const userController = require('../controllers/userController'); // Importing the controller
-const { register, login, authorize, adminRoute, supplierRoute, userRoute, changeRole } = require('../controllers/userController');
+const { register, login, authorize, adminRoute, supplierRoute, userRoute, changeRole , deleteUser } = require('../controllers/userController');
 
 const router = express.Router();
 
@@ -18,6 +18,8 @@ router.get('/user', userController.authorize(['User', 'Admin', 'Supplier']), use
 router.post('/change-role', authorize(['Admin']), changeRole);
 // Admin: Get all users
 router.get('/users', authorize(['Admin']), userController.getAllUsers);
+
+router.delete('/delete', userController.authorize(['Admin']), userController.deleteUser);
 
 
 module.exports = router;

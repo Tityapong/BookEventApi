@@ -6,9 +6,6 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
-
-
-
 passport.use(
   new GoogleStrategy(
     {
@@ -24,33 +21,23 @@ passport.use(
         if (err) return done(err);
 
         if (results.length > 0) {
-          // User exists
+          // User exists, so just return the user data
           return done(null, results[0]);
         } else {
-          // Insert new user
-          // db.query(
-          //   'INSERT INTO Users (googleId, name, email, password) VALUES (?, ?, ?, ?)',
-          //   [id, displayName, email, null], // Set password to NULL for Google users
-          //   (err, results) => {
-          //     if (err) return done(err);
-          //     db.query('SELECT * FROM Users WHERE id = ?', [results.insertId], (err, user) => {
-          //       if (err) return done(err);
-          //       return done(null, user[0]);
-          //     });
-          //   }
-          // );
+          // Insert new user with role "User" and isApproved set to 0 (pending approval)
           db.query(
-            'INSERT INTO Users (googleId, name, email, password, location) VALUES (?, ?, ?, ?, ?)',
-            [id, displayName, email, null, 'default location'], // Set 'default location' as a placeholder if location is unknown
+            'INSERT INTO Users (googleId, name, email, password, location, role, isApproved) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [id, displayName, email, null, 'default location', 'User', 0], // Set role to 'User' by default
             (err, results) => {
               if (err) return done(err);
+
+              // Select the newly inserted user and pass it to the done callback
               db.query('SELECT * FROM Users WHERE id = ?', [results.insertId], (err, user) => {
                 if (err) return done(err);
-                return done(null, user[0]);
+                return done(null, user[0]); // Pass the user data
               });
             }
           );
-          
         }
       });
     }
@@ -205,6 +192,41 @@ const getAllUsers = (req, res) => {
   });
 };
 
+
+// Admin: Delete a user
+const deleteUser = (req, res) => {
+  const { userId } = req.body;
+
+  // Ensure that the requesting user is an Admin
+  if (req.user.role !== 'Admin') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+
+  // Check if the user exists before trying to delete
+  db.query('SELECT * FROM Users WHERE id = ?', [userId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: 'Database error', error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Proceed with deleting the user
+    db.query('DELETE FROM Users WHERE id = ?', [userId], (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: 'Database error', error: err.message });
+      }
+
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.status(200).json({ message: 'User deleted successfully' });
+    });
+  });
+};
+
   
 
 // User route
@@ -213,4 +235,4 @@ const userRoute = (req, res) => {
 };
 
 // Export functions
-module.exports = { register, login, authorize, adminRoute, supplierRoute, userRoute  , changeRole ,getAllUsers};
+module.exports = { register, login, authorize, adminRoute, supplierRoute, userRoute  , changeRole ,getAllUsers , deleteUser};
