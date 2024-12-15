@@ -5,6 +5,10 @@ const session = require("express-session"); // Import express-session
 const passport = require("passport"); // Ensure you have passport installed
 const userRoutes = require("./routes/userRoutes"); // Import user routes
 const authRoutes = require("./routes/socaleRoute"); // Import authentication routes
+const serviceRoutes = require('./routes/serviceRoute');
+const supplierRoutes = require('./routes/supplierRoutes')
+// const bookingRoutes = require('./routes/bookingRoutes')
+const bookingRoute = require('./routes/bookingRoutes');
 
 dotenv.config();
 
@@ -30,7 +34,18 @@ app.use(passport.session());
 app.use('/users/auth', authRoutes);
 app.use("/api/users", userRoutes); // User-related routes
 
+app.use('/', serviceRoutes);
+
+// Middleware to serve uploaded images
+app.use('/uploads', express.static('uploads'));
+
+// Routes
+app.use('/supplier', supplierRoutes);
+
+app.use('/api', bookingRoute);
+
 const PORT = process.env.PORT || 8000;
+
 
 // Start the server
 app.listen(PORT, () => {
