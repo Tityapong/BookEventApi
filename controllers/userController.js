@@ -122,28 +122,6 @@ const register = async (req, res) => {
     );
 };
 
-// Login
-// const login = (req, res) => {
-//     const { email, password } = req.body;
-  
-//     // Find user in the database
-//     db.query('SELECT * FROM Users WHERE email = ?', [email], async (err, results) => {
-//       if (err) return res.status(500).json({ message: 'Database error', body: err.message });
-//       if (results.length === 0) return res.status(400).json({ message: 'User not found', body: null });
-  
-//       const user = results[0];
-  
-//       // Check password
-//       const isPasswordValid = await bcrypt.compare(password, user.password);
-//       if (!isPasswordValid) return res.status(400).json({ message: 'Invalid password', body: null });
-  
-//       // Generate token with lowercase role
-//       const token = jwt.sign({ id: user.id, name: user.name, role: user.role.toLowerCase() }, SECRET_KEY, {
-//         expiresIn: '1d',
-//       });
-//       res.json({ message: 'Login successful', body: { token } });
-//     });
-// };
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -164,13 +142,17 @@ const login = async (req, res) => {
     const user = results[0];
 
     try {
-      // Verify the password
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      // If the password is NULL (likely a Google user), we skip password verification
+      let isPasswordValid = true;
+      if (user.password) {
+        isPasswordValid = await bcrypt.compare(password, user.password);
+      }
+
       if (!isPasswordValid) {
         return res.status(400).json({ message: 'Invalid password' });
       }
 
-      // Generate token with a 1-week expiration
+      // Generate JWT token with the user's role and id
       const token = jwt.sign(
         {
           id: user.id,
@@ -178,10 +160,9 @@ const login = async (req, res) => {
           role: user.role.toLowerCase(),
         },
         SECRET_KEY,
-        { expiresIn: '1w' } // Token will expire in 1 week
+        { expiresIn: '60d' }
       );
 
-      // Respond with the token and user details (excluding sensitive information)
       res.status(200).json({
         message: 'Login successful',
         token,
@@ -198,6 +179,7 @@ const login = async (req, res) => {
     }
   });
 };
+
 
 // Admin route
 const adminRoute = (req, res) => {

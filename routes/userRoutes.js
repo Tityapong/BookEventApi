@@ -66,8 +66,8 @@ router.get("/user", authorize(["User", "Admin", "Supplier"]), userRoute); // Gen
 router.get("/me", authorize(["user"]), getMe); // Only users with the role 'User' can view their profile
 
 // Admin Role Management
-router.post("/change-role", authorize(["Admin"]), changeRole); // Change user role (Admin only)
-router.get("/users", authorize(["Admin"]), getAllUsers); // Admin: Get all users
-router.delete("/delete", authorize(["Admin"]), deleteUser); // Admin: Delete a user
+router.post("/change-role", authorize(["admin"]), changeRole); // Change user role (Admin only)
+router.get("/users", authorize(["admin"]), getAllUsers); // Admin: Get all users
+router.delete("/delete", authorize(["admin"]), deleteUser); // Admin: Delete a user
 
 module.exports = router;
