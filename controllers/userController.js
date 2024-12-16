@@ -39,9 +39,11 @@ passport.use(
           return done(null, results[0]);
         } else {
           console.log('User not found, inserting new user...');
+          const defaultRoleId = 3; // Assuming '3' corresponds to the 'User' role in the Roles table.
+
           db.query(
-            'INSERT INTO Users (googleId, name, email, password, location, role, isApproved) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [id, displayName, email, null, 'default location', 'user', 0],
+            'INSERT INTO Users (googleId, name, email, password, location, role_id, isApproved) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [id, displayName, email, null, 'default location', defaultRoleId, 0],
             (err, results) => {
               if (err) {
                 console.error('Database error (INSERT):', err);
@@ -65,6 +67,7 @@ passport.use(
     }
   )
 );
+
 
 
 // Serialize user
