@@ -20,4 +20,7 @@ router.put('/services/:service_id', authorize(['Supplier']), supplierController.
 // DELETE /supplier/services/:service_id - Delete a service
 router.delete('/services/:service_id', authorize(['Supplier']), supplierController.deleteService);
 
+// GET /supplier/all-services - List all services (publicly available)
+router.get('/all-services', supplierController.listAllServices); // New route
+
 module.exports = router;

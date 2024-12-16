@@ -32,7 +32,7 @@ const createService = (req, res) => {
             return res.status(400).json({ message: 'Image upload failed', error: err.message });
         }
 
-        const { category_id, name, description, price, size } = req.body;
+        const { category_id, name, description, price, size ,location} = req.body;
         const supplier_id = req.user.id; // User ID from authentication
 
         if (req.user.role !== 'Supplier') {
@@ -45,7 +45,7 @@ const createService = (req, res) => {
         );
 
         const query = `
-            INSERT INTO services (supplier_id, category_id, name, description, price, size, image)
+            INSERT INTO services (supplier_id, category_id, name, description, price, size, location, image)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
         const values = [
@@ -55,6 +55,7 @@ const createService = (req, res) => {
             description,
             price,
             size,
+            location,
             imagePaths.join(','), // Store as comma-separated string
         ];
 
@@ -73,6 +74,7 @@ const createService = (req, res) => {
                     description,
                     price,
                     size,
+                    location,
                     images: imagePaths, // Return URLs
                 },
             });
@@ -90,7 +92,7 @@ const listOwnServices = (req, res) => {
     }
 
     const query = `
-        SELECT s.id, s.name, s.description, s.price, s.size, s.image, sc.name AS category_name 
+        SELECT s.id, s.name, s.description, s.price, s.size, s.location, s.image, sc.name AS category_name 
         FROM services s
         JOIN service_categories sc ON s.category_id = sc.id
         WHERE s.supplier_id = ?
@@ -115,6 +117,41 @@ const listOwnServices = (req, res) => {
 };
 
 
+// List all services (publicly available)
+const listAllServices = (req, res) => {
+    const query = `
+        SELECT 
+            s.id, 
+            s.name, 
+            s.description, 
+            s.price, 
+            s.size, 
+            s.location, 
+            s.image, 
+            u.name AS supplier_name,
+            sc.name AS category_name
+        FROM services s
+        JOIN Users u ON s.supplier_id = u.id
+        JOIN service_categories sc ON s.category_id = sc.id
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+
+        // Map images back to URLs
+        const services = results.map(service => ({
+            ...service,
+            images: service.image.split(',').map(image => `${req.protocol}://${req.get('host')}/${image}`),
+        }));
+
+        res.status(200).json({
+            message: 'All services retrieved successfully',
+            services,
+        });
+    });
+};
 
 
 
@@ -127,7 +164,7 @@ const updateService = (req, res) => {
         }
 
         const { service_id } = req.params; // Get the service ID from the URL
-        const { category_id, name, description, price, size } = req.body; // Text fields from the form-data
+        const { category_id, name, description, price, size ,location} = req.body; // Text fields from the form-data
         const supplier_id = req.user.id; // User ID from authentication
 
         if (req.user.role !== 'Supplier') {
@@ -148,6 +185,7 @@ const updateService = (req, res) => {
                 description = ?, 
                 price = ?, 
                 size = ?, 
+                location = ?,
                 image = ?
             WHERE id = ? AND supplier_id = ?
         `;
@@ -157,6 +195,7 @@ const updateService = (req, res) => {
             description,
             price,
             size,
+            location,
             imagePaths.join(','), // Update images as a comma-separated string
             service_id,
             supplier_id,
@@ -180,6 +219,7 @@ const updateService = (req, res) => {
                     description,
                     price,
                     size,
+                    location,
                     images: imagePaths,
                 },
             });
@@ -219,5 +259,6 @@ module.exports = {
     createService,
     listOwnServices,
     updateService,
-    deleteService
+    deleteService,
+    listAllServices
 };
