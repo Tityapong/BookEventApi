@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const multer = require('multer');
+// const BASE_URL = process.env.BASE_URL || 'http://localhost:8000'; 
 
 // Multer configuration for image uploads
 const storage = multer.diskStorage({
@@ -142,7 +143,7 @@ const listAllServices = (req, res) => {
         // Map image paths to URLs
         const services = results.map(service => ({
             ...service,
-            images: service.image.split(',').map(image => `${req.protocol}://${req.get('host')}/${image}`)
+            images: service.image.split(',').map(image => `${image}`)
         }));
 
         res.status(200).json({
@@ -272,7 +273,7 @@ const listServicesByCategory = (req, res) => {
         // Map image paths to URLs
         const services = results.map(service => ({
             ...service,
-            images: service.image.split(',').map(image => `${req.protocol}://${req.get('host')}/${image}`)
+            images: service.image.split(',').map(image => `${image}`)
         }));
 
         res.status(200).json({
