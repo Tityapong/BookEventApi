@@ -64,20 +64,108 @@ const getSupplierBookings = async (req, res) => {
 /**
  * Controller to create a new booking by a user
  */
+// const createBooking = async (req, res) => {
+//   try {
+//     // Destructure the booking details from the request body
+//     const { name, email, phone, service_id, event_date } = req.body;
+
+//     // Input Validation
+//     if (!name || !email || !phone || !service_id || !event_date) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Name, email, phone, service ID, and event date are required.',
+//       });
+//     }
+
+//     console.log('Booking request data:', { name, email, phone, service_id, event_date });
+
+//     // Check if the service exists
+//     const [serviceResults] = await pool.promise().query('SELECT * FROM services WHERE id = ?', [service_id]);
+//     if (serviceResults.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Service not found.',
+//       });
+//     }
+
+//     const service = serviceResults[0];
+//     const supplierId = service.supplier_id;
+
+//     // Check if the user already exists based on email or phone
+//     const [userResults] = await pool.promise().query(
+//       'SELECT * FROM Users WHERE email = ? OR phone = ?',
+//       [email, phone]
+//     );
+
+//     let userId;
+//     if (userResults.length === 0) {
+//       // If user does not exist, create a new user with role_id = 3 (user)
+//       const [insertUserResult] = await pool.promise().query(
+//         'INSERT INTO Users (name, email, phone, role_id, created_at) VALUES (?, ?, ?, ?, NOW())',
+//         [name, email, phone, 3] // Set role_id to 3 for "user"
+//       );
+//       userId = insertUserResult.insertId;
+//     } else {
+//       // Use existing user ID
+//       userId = userResults[0].id;
+//     }
+
+//     console.log('Resolved User ID:', userId);
+
+//     // Insert the booking into the database
+//     const [insertBookingResult] = await pool.promise().query(
+//       'INSERT INTO bookings (user_id, service_id, event_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
+//       [userId, service_id, event_date, 'Pending']
+//     );
+
+//     console.log('Booking insertion result:', insertBookingResult);
+
+//     // Fetch the newly created booking
+//     const [bookingResults] = await pool.promise().query('SELECT * FROM bookings WHERE id = ?', [insertBookingResult.insertId]);
+//     const booking = bookingResults[0];
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Booking created successfully.',
+//       data: {
+//         id: booking.id,
+//         service_id: booking.service_id,
+//         event_date: booking.event_date,
+//         status: booking.status,
+//         created_at: booking.created_at,
+//         updated_at: booking.updated_at,
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Error creating booking:', error.message, error.stack);
+//     res.status(500).json({
+//       success: false,
+//       message: 'An error occurred while creating the booking.',
+//       error: error.message, // Add this line for detailed error reporting
+//     });
+//   }
+// };
+
+
+/**
+ * Controller to create a new booking by a user
+ */
 const createBooking = async (req, res) => {
   try {
     // Destructure the booking details from the request body
-    const { name, email, phone, service_id, event_date } = req.body;
+    const { service_id, event_date, name, email, phone } = req.body;
 
     // Input Validation
-    if (!name || !email || !phone || !service_id || !event_date) {
+    if (!service_id || !event_date || !name || !email || !phone) {
       return res.status(400).json({
         success: false,
-        message: 'Name, email, phone, service ID, and event date are required.',
+        message: 'Service ID, event date, name, email, and phone are required.',
       });
     }
 
-    console.log('Booking request data:', { name, email, phone, service_id, event_date });
+    console.log('Booking request data:', { service_id, event_date, name, email, phone });
+
+    const userId = req.user.id; // Use authenticated user's ID
 
     // Check if the service exists
     const [serviceResults] = await pool.promise().query('SELECT * FROM services WHERE id = ?', [service_id]);
@@ -91,31 +179,13 @@ const createBooking = async (req, res) => {
     const service = serviceResults[0];
     const supplierId = service.supplier_id;
 
-    // Check if the user already exists based on email or phone
-    const [userResults] = await pool.promise().query(
-      'SELECT * FROM Users WHERE email = ? OR phone = ?',
-      [email, phone]
-    );
-
-    let userId;
-    if (userResults.length === 0) {
-      // If user does not exist, create a new user with role_id = 3 (user)
-      const [insertUserResult] = await pool.promise().query(
-        'INSERT INTO Users (name, email, phone, role_id, created_at) VALUES (?, ?, ?, ?, NOW())',
-        [name, email, phone, 3] // Set role_id to 3 for "user"
-      );
-      userId = insertUserResult.insertId;
-    } else {
-      // Use existing user ID
-      userId = userResults[0].id;
-    }
-
-    console.log('Resolved User ID:', userId);
-
-    // Insert the booking into the database
+    // Insert the booking into the database with contact information
     const [insertBookingResult] = await pool.promise().query(
-      'INSERT INTO bookings (user_id, service_id, event_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-      [userId, service_id, event_date, 'Pending']
+      `INSERT INTO bookings 
+        (user_id, service_id, event_date, status, contact_name, contact_email, contact_phone, created_at, updated_at) 
+       VALUES 
+        (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [userId, service_id, event_date, 'Pending', name, email, phone]
     );
 
     console.log('Booking insertion result:', insertBookingResult);
@@ -132,6 +202,9 @@ const createBooking = async (req, res) => {
         service_id: booking.service_id,
         event_date: booking.event_date,
         status: booking.status,
+        contact_name: booking.contact_name,
+        contact_email: booking.contact_email,
+        contact_phone: booking.contact_phone,
         created_at: booking.created_at,
         updated_at: booking.updated_at,
       },
@@ -141,10 +214,12 @@ const createBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'An error occurred while creating the booking.',
-      error: error.message, // Add this line for detailed error reporting
+      error: error.message, // Detailed error reporting
     });
   }
 };
+
+
 const acceptBooking = async (req, res) => {
   try {
     console.log('User Details:', req.user); // Debugging: Log the user details
@@ -300,5 +375,88 @@ const getUserNotifications = async (req, res) => {
 };
 
 
+/**
+ * Controller to reject a booking by a supplier
+ */
+const rejectBooking = async (req, res) => {
+  try {
+    console.log('User Details:', req.user); // Debugging: Log the user details
 
-module.exports = { getSupplierBookings, createBooking  , acceptBooking , getUserBookings , getUserNotifications};
+    const supplierId = req.user.id; // Supplier ID from the authenticated user
+    const { id } = req.params; // Booking ID from the URL params
+
+    // Ensure the user has the 'supplier' role
+    if (req.user.role !== 'supplier') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Only suppliers can reject bookings.' 
+      });
+    }
+
+    // Check if the booking exists and belongs to the supplier's service
+    const queryCheck = `
+      SELECT b.id, b.user_id, b.status, s.supplier_id
+      FROM bookings b
+      JOIN services s ON b.service_id = s.id
+      WHERE b.id = ? AND s.supplier_id = ?
+    `;
+
+    const [bookingResults] = await pool.promise().query(queryCheck, [id, supplierId]);
+
+    if (bookingResults.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found or not authorized.',
+      });
+    }
+
+    const booking = bookingResults[0];
+
+    // Optional: Check if the booking is in a state that can be rejected
+    if (booking.status !== 'Pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot reject a booking with status '${booking.status}'.`,
+      });
+    }
+
+    const userId = booking.user_id;
+
+    // Update the booking status to "Rejected"
+    const queryUpdate = `
+      UPDATE bookings
+      SET status = 'Rejected', updated_at = NOW()
+      WHERE id = ?
+    `;
+    await pool.promise().query(queryUpdate, [id]);
+
+    // Insert a notification for the user
+    const notificationMessage = 'Your booking has been rejected by the supplier.';
+    const queryNotification = `
+      INSERT INTO notifications (user_id, booking_id, message, is_read, created_at)
+      VALUES (?, ?, ?, ?, NOW())
+    `;
+    await pool.promise().query(queryNotification, [userId, id, notificationMessage, false]);
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking rejected successfully, and notification sent to the user.',
+      data: {
+        booking_id: id,
+        status: 'Rejected',
+      },
+    });
+  } catch (error) {
+    console.error('Error rejecting booking:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while rejecting the booking.',
+      error: error.message,
+    });
+  }
+};
+
+
+
+
+module.exports = { getSupplierBookings, createBooking  , acceptBooking , getUserBookings , getUserNotifications , rejectBooking} ;

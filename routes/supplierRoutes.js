@@ -38,5 +38,9 @@ router.get('/all-services', supplierController.listAllServices);
 // GET /supplier/services/category/:category_name - List services by category name (publicly available)
 router.get('/services/category/:category_name', supplierController.listServicesByCategory);
 
+  // GET /supplier/services/:service_id - Get service details by ID (publicly available)
+router.get('/services/:service_id', supplierController.getServiceDetailById);
+
+
 
 module.exports = router;

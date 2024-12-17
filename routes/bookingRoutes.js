@@ -1,7 +1,7 @@
 // routes/bookingRoute.js
 const express = require('express');
 const router = express.Router();
-const { getSupplierBookings  , createBooking , acceptBooking , getUserBookings , getUserNotifications} = require('../controllers/bookingController'); // Corrected import path
+const { getSupplierBookings  , createBooking , acceptBooking , getUserBookings , getUserNotifications, rejectBooking} = require('../controllers/bookingController'); // Corrected import path
 const { authorize } = require('../middleware/authorize'); // Assuming middleware file is named auth.js
 
 // Log to verify controller import
@@ -14,6 +14,9 @@ router.get('/bookings', authorize(['supplier']), getSupplierBookings);
 router.post('/bookings', authorize(['user']), createBooking);
 // PUT /supplier/bookings/:id/accept - Accept a booking
 router.put('/bookings/:id/accept', authorize(['supplier']), acceptBooking);
+
+router.put('/bookings/:id/reject', authorize(['supplier']), rejectBooking);
+
 
 router.get('/user/bookings', authorize(['user']), getUserBookings);
 

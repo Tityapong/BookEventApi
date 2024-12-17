@@ -331,6 +331,77 @@ const getTotalPendingBookings = (req, res) => {
 };
 
 
+
+
+// Get service details by ID
+const  getServiceDetailById= (req, res) => {
+    const { service_id } = req.params; // Extract service ID from URL parameters
+
+    // Validate the service_id
+    if (!service_id || isNaN(service_id)) {
+        return res.status(400).json({
+            message: 'Invalid service ID provided.',
+        });
+    }
+
+    const query = `
+        SELECT 
+            s.id, 
+            s.name, 
+            s.description, 
+            s.price, 
+            s.size, 
+            s.location, 
+            s.image, 
+            sc.name AS category_name,
+            u.name AS supplier_name,
+            u.email AS supplier_email,
+            u.phone AS supplier_phone
+        FROM services s
+        JOIN service_categories sc ON s.category_id = sc.id
+        JOIN Users u ON s.supplier_id = u.id
+        WHERE s.id = ?
+    `;
+
+    db.query(query, [service_id], (err, results) => {
+        if (err) {
+            console.error('Database error:', err.message);
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Service not found.' });
+        }
+
+        const service = results[0];
+
+        // Handle image URLs
+        const images = service.image
+            ? service.image.split(',').map(image => `${req.protocol}://${req.get('host')}/uploads/${image.trim()}`)
+            : [];
+
+        res.status(200).json({
+            message: 'Service details retrieved successfully.',
+            service: {
+                id: service.id,
+                name: service.name,
+                description: service.description,
+                price: service.price,
+                size: service.size,
+                location: service.location,
+                category: service.category_name,
+                supplier: {
+                    name: service.supplier_name,
+                    email: service.supplier_email,
+                    phone: service.supplier_phone,
+                },
+                images, // Array of image URLs
+            },
+        });
+    });
+};
+
+
 module.exports = {
     createService,
     listOwnServices,
@@ -339,5 +410,6 @@ module.exports = {
     listAllServices,
     listServicesByCategory,
     getTotalServices,
-    getTotalPendingBookings
+    getTotalPendingBookings,
+    getServiceDetailById
 };
