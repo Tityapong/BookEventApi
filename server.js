@@ -106,7 +106,7 @@ app.use(passport.session());
 app.use('/users/auth', authRoutes);
 app.use("/api/users", userRoutes);
 app.use('/', serviceRoutes);
-app.use('/uploads', express.static('uploads'));
+// app.use('/uploads', express.static('uploads'));
 app.use('/supplier', supplierRoutes);
 app.use('/api', bookingRoute);
 
