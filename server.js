@@ -68,11 +68,18 @@ const authRoutes = require("./routes/socaleRoute");
 const serviceRoutes = require('./routes/serviceRoute');
 const supplierRoutes = require('./routes/supplierRoutes');
 const bookingRoute = require('./routes/bookingRoutes');
+const connectCloudinary = require('./config/cloudinary');
+// const connectCloudinary = require('./config/cloudinary');
+
+// // Connect to Cloudinary
+// connectCloudinary();
+
+
+
 
 // Load environment variables
 dotenv.config();
 const app = express(); // Initialize the app FIRST
-
 
 
 app.use(cors());
@@ -88,9 +95,12 @@ app.use(
   })
 );
 
+
+
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
+
 
 // Routes
 app.use('/users/auth', authRoutes);

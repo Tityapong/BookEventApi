@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 const supplierController = require('../controllers/supplierController');
 const { authorize } = require('../middleware/authorize');
-
+const upload = require("../middleware/upload"); 
 // POST /supplier/services - Create a service (suppliers only)
 router.post(
-    '/services',
-    authorize(['supplier']),  // Allow only 'supplier' role (case-insensitive)
+    "/services",
+    authorize(["supplier"]), // Allow only 'supplier' role
+    upload.array("images", 3), // Handle up to 3 images
     supplierController.createService
 );
-
 // GET /supplier/services - List own services (suppliers only)
 router.get(
     '/services',
@@ -17,10 +17,11 @@ router.get(
     supplierController.listOwnServices
 );
 
-// PUT /supplier/services/:service_id - Update a service (suppliers only)
+// Update a service
 router.put(
     '/services/:service_id',
-    authorize(['supplier']),  // Allow only 'supplier' role
+    authorize(['supplier']),
+    upload.array("images", 3), // Allow image updates
     supplierController.updateService
 );
 

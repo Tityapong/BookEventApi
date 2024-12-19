@@ -1,50 +1,18 @@
 const db = require('../config/db');
-const multer = require('multer');
-// const BASE_URL = process.env.BASE_URL || 'http://localhost:8000'; 
 
-// Multer configuration for image uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    },
-});
-
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only image files are allowed!'), false);
-    }
-};
-
-const upload = multer({
-    storage,
-    limits: { fileSize: 2 * 1024 * 1024 }, // Limit of 2MB per file
-    fileFilter,
-}).array('images', 3); // Allow up to 3 images
-
-// Create a service
 const createService = (req, res) => {
-    upload(req, res, (err) => {
-        if (err) {
-            return res.status(400).json({ message: 'Image upload failed', error: err.message });
-        }
+    // Multer's `upload` middleware will handle file uploads
+    const { category_id, name, description, price, size, location } = req.body;
+    const supplier_id = req.user.id; // User ID from authentication
 
-        const { category_id, name, description, price, size, location } = req.body;
-        const supplier_id = req.user.id; // User ID from authentication
+    // Ensure the user has 'supplier' role
+    if (req.user.role !== "supplier") {
+        return res.status(403).json({ message: "Only suppliers can create services" });
+    }
 
-        // Ensure the user has 'supplier' role
-        if (req.user.role !== 'supplier') {
-            return res.status(403).json({ message: 'Only suppliers can create services' });
-        }
-
-        // Generate image URLs
-        const imagePaths = req.files.map(
-            (file) => `${req.protocol}://${req.get('host')}/uploads/${file.filename}`
-        );
+    try {
+        // Generate Cloudinary URLs
+        const imagePaths = req.files.map((file) => file.path); // Cloudinary URL is in `file.path`
 
         const query = `
             INSERT INTO services (supplier_id, category_id, name, description, price, size, location, image)
@@ -58,16 +26,16 @@ const createService = (req, res) => {
             price,
             size,
             location,
-            imagePaths.join(','), // Store images as a comma-separated string
+            imagePaths.join(","), // Store image URLs as a comma-separated string
         ];
 
         db.query(query, values, (err, results) => {
             if (err) {
-                return res.status(500).json({ message: 'Database error', error: err.message });
+                return res.status(500).json({ message: "Database error", error: err.message });
             }
 
             res.status(201).json({
-                message: 'Service created successfully',
+                message: "Service created successfully",
                 service: {
                     id: results.insertId,
                     supplier_id,
@@ -77,11 +45,13 @@ const createService = (req, res) => {
                     price,
                     size,
                     location,
-                    images: imagePaths, // Return image URLs
+                    images: imagePaths, // Return Cloudinary URLs
                 },
             });
         });
-    });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to create service", error: error.message });
+    }
 };
 
 // List services created by the authenticated supplier
@@ -129,7 +99,7 @@ const listAllServices = (req, res) => {
             s.location, 
             s.image, 
             u.name AS supplier_name,
-            sc.name AS category_name
+            sc.name AS category_name,
         FROM services s
         JOIN Users u ON s.supplier_id = u.id
         JOIN service_categories sc ON s.category_id = sc.id
@@ -154,71 +124,62 @@ const listAllServices = (req, res) => {
 };
 
 // Update a service
+// Update a service
 const updateService = (req, res) => {
-    upload(req, res, (err) => {
+    const { service_id } = req.params;
+    const { category_id, name, description, price, size, location } = req.body;
+    const supplier_id = req.user.id;
+
+    if (req.user.role !== 'supplier') {
+        return res.status(403).json({ message: 'Only suppliers can update services' });
+    }
+
+    const imagePaths = req.files.map((file) => file.path); // Cloudinary URLs
+    const query = `
+        UPDATE services
+        SET 
+            category_id = ?, 
+            name = ?, 
+            description = ?, 
+            price = ?, 
+            size = ?, 
+            location = ?,
+            image = ?
+        WHERE id = ? AND supplier_id = ?
+    `;
+    const values = [
+        category_id,
+        name,
+        description,
+        price,
+        size,
+        location,
+        imagePaths.join(','), // Update images as Cloudinary URLs
+        service_id,
+        supplier_id,
+    ];
+
+    db.query(query, values, (err, results) => {
         if (err) {
-            return res.status(400).json({ message: 'Image upload failed', error: err.message });
+            return res.status(500).json({ message: 'Database error', error: err.message });
         }
 
-        const { service_id } = req.params; // Get the service ID from the URL
-        const { category_id, name, description, price, size, location } = req.body; // Fields from form
-        const supplier_id = req.user.id; // User ID from authentication
-
-        if (req.user.role !== 'supplier') {
-            return res.status(403).json({ message: 'Only suppliers can update services' });
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Service not found or not authorized to update' });
         }
 
-        // Collect new image URLs if any images were uploaded
-        const imagePaths = req.files.map(
-            (file) => `${req.protocol}://${req.get('host')}/uploads/${file.filename}`
-        );
-
-        const query = `
-            UPDATE services
-            SET 
-                category_id = ?, 
-                name = ?, 
-                description = ?, 
-                price = ?, 
-                size = ?, 
-                location = ?,
-                image = ?
-            WHERE id = ? AND supplier_id = ?
-        `;
-        const values = [
-            category_id,
-            name,
-            description,
-            price,
-            size,
-            location,
-            imagePaths.join(','), // Update images as a comma-separated string
-            service_id,
-            supplier_id,
-        ];
-
-        db.query(query, values, (err, results) => {
-            if (err) {
-                return res.status(500).json({ message: 'Database error', error: err.message });
-            }
-
-            if (results.affectedRows === 0) {
-                return res.status(404).json({ message: 'Service not found or not authorized to update' });
-            }
-
-            res.status(200).json({
-                message: 'Service updated successfully',
-                service: {
-                    service_id,
-                    category_id,
-                    name,
-                    description,
-                    price,
-                    size,
-                    location,
-                    images: imagePaths,
-                },
-            });
+        res.status(200).json({
+            message: 'Service updated successfully',
+            service: {
+                service_id,
+                category_id,
+                name,
+                description,
+                price,
+                size,
+                location,
+                images: imagePaths,
+            },
         });
     });
 };
