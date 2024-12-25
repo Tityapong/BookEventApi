@@ -15,7 +15,7 @@ router.get(
 
   //   user: req.user 
   // });
-  req.redirect('https://book-my-event-mm51tw097-tityapongs-projects.vercel.app/');
+  req.redirect('https://book-my-event-pink.vercel.app/');
   }
 );
 
