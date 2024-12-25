@@ -11,7 +11,11 @@ router.get(
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
     // Successful login, redirect to a protected route or send user data
-    res.json({ message: 'Google login successful', user: req.user });
+  //   res.json({ message: 'Google login successful', 
+
+  //   user: req.user 
+  // });
+  req.redirect('https://book-my-event-mm51tw097-tityapongs-projects.vercel.app/');
   }
 );
 
