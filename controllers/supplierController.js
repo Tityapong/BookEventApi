@@ -1,95 +1,189 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
 const createService = (req, res) => {
-    // Multer's `upload` middleware will handle file uploads
-    const { category_id, name, description, price, size, location } = req.body;
-    const supplier_id = req.user.id; // User ID from authentication
 
-    // Ensure the user has 'supplier' role
-    if (req.user.role !== "supplier") {
-        return res.status(403).json({ message: "Only suppliers can create services" });
-    }
+  // Multer's `upload` middleware will handle file uploads
+  const { category_id, name, description, price, size, location } = req.body;
+  const supplier_id = req.user.id; // User ID from authentication
 
-    try {
-        // Generate Cloudinary URLs
-        const imagePaths = req.files.map((file) => file.path); // Cloudinary URL is in `file.path`
+  // Ensure the user has 'supplier' role
+  if (req.user.role !== "supplier") {
+    return res
+      .status(403)
+      .json({ message: "Only suppliers can create services" });
+  }
+  console.log(" file: " + req.files);
+  try {
+    // Generate Cloudinary URLs
+    const imagePaths = req.files.map((file) => file.path); // Cloudinary URL is in `file.path`
+    console.log("image", imagePaths);
+    console.log("Cloudinary URLs:", imagePaths);
 
-        const query = `
+    const query = `
             INSERT INTO services (supplier_id, category_id, name, description, price, size, location, image)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        const values = [
-            supplier_id,
-            category_id,
-            name,
-            description,
-            price,
-            size,
-            location,
-            imagePaths.join(","), // Store image URLs as a comma-separated string
-        ];
+    const values = [
+      supplier_id,
+      category_id,
+      name,
+      description,
+      price,
+      size,
+      location,
+      imagePaths.join(","), // Store image URLs as a comma-separated string
+    ];
 
-        db.query(query, values, (err, results) => {
-            if (err) {
-                return res.status(500).json({ message: "Database error", error: err.message });
-            }
+    db.query(query, values, (err, results) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: "Database error", error: err.message });
+      }
 
-            res.status(201).json({
-                message: "Service created successfully",
-                service: {
-                    id: results.insertId,
-                    supplier_id,
-                    category_id,
-                    name,
-                    description,
-                    price,
-                    size,
-                    location,
-                    images: imagePaths, // Return Cloudinary URLs
-                },
-            });
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Failed to create service", error: error.message });
+      res.status(201).json({
+        message: "Service created successfully",
+        service: {
+          id: results.insertId,
+          supplier_id,
+          category_id,
+          name,
+          description,
+          price,
+          size,
+          location,
+          images: imagePaths, // Return Cloudinary URLs
+        },
+      });
+    });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: "Failed to create service", error: error.message });
+  }
+};
+
+
+// const createService = (req, res) => {
+//   console.log(" file: " , req.files);
+
+//   res.status(201).json({
+//     message: "Service created successfully",
+//   });
+// }
+
+// Update a service
+const updateService = (req, res) => {
+  const { service_id } = req.params;
+  const { category_id, name, description, price, size, location } = req.body;
+  const supplier_id = req.user.id;
+
+  if (req.user.role !== "supplier") {
+    return res
+      .status(403)
+      .json({ message: "Only suppliers can update services" });
+  }
+
+  const imagePaths = req.files.map((file) => file.path); // Cloudinary URLs
+  console.log("image", imagePaths);
+  console.log("Cloudinary URLs:", imagePaths);
+
+  const query = `
+        UPDATE services
+        SET 
+            category_id = ?, 
+            name = ?, 
+            description = ?, 
+            price = ?, 
+            size = ?, 
+            location = ?,
+            image = ?
+        WHERE id = ? AND supplier_id = ?
+    `;
+  const values = [
+    category_id,
+    name,
+    description,
+    price,
+    size,
+    location,
+    imagePaths.join(","), // Update images as Cloudinary URLs
+    service_id,
+    supplier_id,
+  ];
+
+  db.query(query, values, (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
+
+    if (results.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ message: "Service not found or not authorized to update" });
+    }
+
+    res.status(200).json({
+      message: "Service updated successfully",
+      service: {
+        service_id,
+        category_id,
+        name,
+        description,
+        price,
+        size,
+        location,
+        images: imagePaths,
+      },
+    });
+  });
 };
 
 // List services created by the authenticated supplier
 const listOwnServices = (req, res) => {
-    const supplier_id = req.user.id; // User ID from authentication
+  const supplier_id = req.user.id; // User ID from authentication
 
-    if (req.user.role !== 'supplier') {
-        return res.status(403).json({ message: 'Only suppliers can view their services' });
-    }
+  if (req.user.role !== "supplier") {
+    return res
+      .status(403)
+      .json({ message: "Only suppliers can view their services" });
+  }
 
-    const query = `
+  const query = `
         SELECT s.id, s.name, s.description, s.price, s.size, s.location, s.image, sc.name AS category_name 
         FROM services s
         JOIN service_categories sc ON s.category_id = sc.id
         WHERE s.supplier_id = ?
     `;
 
-    db.query(query, [supplier_id], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
+  db.query(query, [supplier_id], (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
 
-        // Map image paths to URLs
-        const services = results.map(service => ({
-            ...service,
-            images: service.image.split(',').map(image => `${req.protocol}://${req.get('host')}/${image}`)
-        }));
+    // Map image paths to URLs
+    const services = results.map((service) => ({
+      ...service,
+      images: service.image
+        .split(",")
+        .map((image) => `${req.protocol}://${req.get("host")}/${image}`),
+    }));
 
-        res.status(200).json({
-            message: 'Services retrieved successfully',
-            services,
-        });
+    res.status(200).json({
+      message: "Services retrieved successfully",
+      services,
     });
+  });
 };
 
 // List all services (publicly available)
 const listAllServices = (req, res) => {
-    const query = `
+  const query = `
         SELECT 
             s.id, 
             s.name, 
@@ -105,172 +199,124 @@ const listAllServices = (req, res) => {
         JOIN service_categories sc ON s.category_id = sc.id
     `;
 
-    db.query(query, (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
-
-        // Map image paths to URLs
-        const services = results.map(service => ({
-            ...service,
-            images: service.image.split(',').map(image => `${image}`)
-        }));
-
-        res.status(200).json({
-            message: 'All services retrieved successfully',
-            services,
-        });
-    });
-};
-
-// Update a service
-// Update a service
-const updateService = (req, res) => {
-    const { service_id } = req.params;
-    const { category_id, name, description, price, size, location } = req.body;
-    const supplier_id = req.user.id;
-
-    if (req.user.role !== 'supplier') {
-        return res.status(403).json({ message: 'Only suppliers can update services' });
+  db.query(query, (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
 
-    const imagePaths = req.files.map((file) => file.path); // Cloudinary URLs
-    const query = `
-        UPDATE services
-        SET 
-            category_id = ?, 
-            name = ?, 
-            description = ?, 
-            price = ?, 
-            size = ?, 
-            location = ?,
-            image = ?
-        WHERE id = ? AND supplier_id = ?
-    `;
-    const values = [
-        category_id,
-        name,
-        description,
-        price,
-        size,
-        location,
-        imagePaths.join(','), // Update images as Cloudinary URLs
-        service_id,
-        supplier_id,
-    ];
+    // Map image paths to URLs
+    const services = results.map((service) => ({
+      ...service,
+      images: service.image.split(",").map((image) => `${image}`),
+    }));
 
-    db.query(query, values, (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
-
-        if (results.affectedRows === 0) {
-            return res.status(404).json({ message: 'Service not found or not authorized to update' });
-        }
-
-        res.status(200).json({
-            message: 'Service updated successfully',
-            service: {
-                service_id,
-                category_id,
-                name,
-                description,
-                price,
-                size,
-                location,
-                images: imagePaths,
-            },
-        });
+    res.status(200).json({
+      message: "All services retrieved successfully",
+      services,
     });
+  });
 };
 
 // Delete a service
 const deleteService = (req, res) => {
-    const { service_id } = req.params;
-    const supplier_id = req.user.id; // User ID from authentication
+  const { service_id } = req.params;
+  const supplier_id = req.user.id; // User ID from authentication
 
-    if (req.user.role !== 'supplier') {
-        return res.status(403).json({ message: 'Only suppliers can delete services' });
-    }
+  if (req.user.role !== "supplier") {
+    return res
+      .status(403)
+      .json({ message: "Only suppliers can delete services" });
+  }
 
-    const query = `
+  const query = `
         DELETE FROM services WHERE id = ? AND supplier_id = ?
     `;
 
-    db.query(query, [service_id, supplier_id], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
+  db.query(query, [service_id, supplier_id], (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
 
-        if (results.affectedRows === 0) {
-            return res.status(404).json({ message: 'Service not found or not authorized to delete' });
-        }
+    if (results.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ message: "Service not found or not authorized to delete" });
+    }
 
-        res.status(200).json({ message: 'Service deleted successfully' });
-    });
+    res.status(200).json({ message: "Service deleted successfully" });
+  });
 };
 
 const listServicesByCategory = (req, res) => {
-    const { category_name } = req.params;  // Category name from the URL
+  const { category_name } = req.params; // Category name from the URL
 
-    const normalizedCategoryName = category_name.trim().toLowerCase(); // Normalize category name
+  const normalizedCategoryName = category_name.trim().toLowerCase(); // Normalize category name
 
-    const query = `
+  const query = `
         SELECT s.id, s.name, s.description, s.price, s.size, s.location, s.image, sc.name AS category_name
         FROM services s
         JOIN service_categories sc ON s.category_id = sc.id
         WHERE LOWER(sc.name) = ?
     `;
 
-    db.query(query, [normalizedCategoryName], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
+  db.query(query, [normalizedCategoryName], (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
 
-        if (results.length === 0) {
-            return res.status(404).json({ message: 'No services found in this category' });
-        }
+    if (results.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No services found in this category" });
+    }
 
-        // Map image paths to URLs
-        const services = results.map(service => ({
-            ...service,
-            images: service.image.split(',').map(image => `${image}`)
-        }));
+    // Map image paths to URLs
+    const services = results.map((service) => ({
+      ...service,
+      images: service.image.split(",").map((image) => `${image}`),
+    }));
 
-        res.status(200).json({
-            message: 'Services retrieved successfully',
-            services,
-        });
+    res.status(200).json({
+      message: "Services retrieved successfully",
+      services,
     });
+  });
 };
 
 const getTotalServices = (req, res) => {
-    const supplier_id = req.user.id;
+  const supplier_id = req.user.id;
 
-    const query = `
+  const query = `
         SELECT COUNT(*) AS total_services
         FROM services
         WHERE supplier_id = ?
     `;
 
-    db.query(query, [supplier_id], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
+  db.query(query, [supplier_id], (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
 
-        res.status(200).json({
-            message: 'Total services count retrieved successfully',
-            total_services: results[0].total_services,
-        });
+    res.status(200).json({
+      message: "Total services count retrieved successfully",
+      total_services: results[0].total_services,
     });
+  });
 };
-
 
 // Get Total Pending Bookings for Supplier
 const getTotalPendingBookings = (req, res) => {
-    const supplier_id = req.user.id;
+  const supplier_id = req.user.id;
 
-    const query = `
+  const query = `
         SELECT COUNT(*) AS total_pending_bookings
         FROM bookings
         WHERE status = 'Pending'
@@ -279,33 +325,32 @@ const getTotalPendingBookings = (req, res) => {
         )
     `;
 
-    db.query(query, [supplier_id], (err, results) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
-
-        res.status(200).json({
-            message: 'Total pending bookings retrieved successfully',
-            total_pending_bookings: results[0].total_pending_bookings,
-        });
-    });
-};
-
-
-
-
-// Get service details by ID
-const  getServiceDetailById= (req, res) => {
-    const { service_id } = req.params; // Extract service ID from URL parameters
-
-    // Validate the service_id
-    if (!service_id || isNaN(service_id)) {
-        return res.status(400).json({
-            message: 'Invalid service ID provided.',
-        });
+  db.query(query, [supplier_id], (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
 
-    const query = `
+    res.status(200).json({
+      message: "Total pending bookings retrieved successfully",
+      total_pending_bookings: results[0].total_pending_bookings,
+    });
+  });
+};
+
+// Get service details by ID
+const getServiceDetailById = (req, res) => {
+  const { service_id } = req.params; // Extract service ID from URL parameters
+
+  // Validate the service_id
+  if (!service_id || isNaN(service_id)) {
+    return res.status(400).json({
+      message: "Invalid service ID provided.",
+    });
+  }
+
+  const query = `
         SELECT 
             s.id, 
             s.name, 
@@ -324,53 +369,59 @@ const  getServiceDetailById= (req, res) => {
         WHERE s.id = ?
     `;
 
-    db.query(query, [service_id], (err, results) => {
-        if (err) {
-            console.error('Database error:', err.message);
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
+  db.query(query, [service_id], (err, results) => {
+    if (err) {
+      console.error("Database error:", err.message);
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
 
-        if (results.length === 0) {
-            return res.status(404).json({ message: 'Service not found.' });
-        }
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Service not found." });
+    }
 
-        const service = results[0];
+    const service = results[0];
 
-        // Handle image URLs
-        const images = service.image
-            ? service.image.split(',').map(image => `${req.protocol}://${req.get('host')}/uploads/${image.trim()}`)
-            : [];
+    // Handle image URLs
+    const images = service.image
+      ? service.image
+          .split(",")
+          .map(
+            (image) =>
+              `${req.protocol}://${req.get("host")}/uploads/${image.trim()}`
+          )
+      : [];
 
-        res.status(200).json({
-            message: 'Service details retrieved successfully.',
-            service: {
-                id: service.id,
-                name: service.name,
-                description: service.description,
-                price: service.price,
-                size: service.size,
-                location: service.location,
-                category: service.category_name,
-                supplier: {
-                    name: service.supplier_name,
-                    email: service.supplier_email,
-                    phone: service.supplier_phone,
-                },
-                images, // Array of image URLs
-            },
-        });
+    res.status(200).json({
+      message: "Service details retrieved successfully.",
+      service: {
+        id: service.id,
+        name: service.name,
+        description: service.description,
+        price: service.price,
+        size: service.size,
+        location: service.location,
+        category: service.category_name,
+        supplier: {
+          name: service.supplier_name,
+          email: service.supplier_email,
+          phone: service.supplier_phone,
+        },
+        images, // Array of image URLs
+      },
     });
+  });
 };
 
-
 module.exports = {
-    createService,
-    listOwnServices,
-    updateService,
-    deleteService,
-    listAllServices,
-    listServicesByCategory,
-    getTotalServices,
-    getTotalPendingBookings,
-    getServiceDetailById
+  createService,
+  listOwnServices,
+  updateService,
+  deleteService,
+  listAllServices,
+  listServicesByCategory,
+  getTotalServices,
+  getTotalPendingBookings,
+  getServiceDetailById,
 };

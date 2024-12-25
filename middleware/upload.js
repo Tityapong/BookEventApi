@@ -7,7 +7,7 @@ const cloudinary = require("../config/cloudinary"); // Import configured Cloudin
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: "services", // Folder name in Cloudinary
+        folder: "Booking", // Folder name in Cloudinary
         allowed_formats: ["jpg", "jpeg", "png"], // Allowed file formats
     },
 });
@@ -15,7 +15,7 @@ const storage = new CloudinaryStorage({
 // Multer middleware
 const upload = multer({
     storage,
-    limits: { fileSize: 2 * 1024 * 1024 }, // Limit file size to 2MB
+    limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 2MB
 });
 
 module.exports = upload;
