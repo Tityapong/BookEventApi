@@ -15,7 +15,8 @@ router.get(
 
   //   user: req.user 
   // });
-  res.redirect('https://book-my-event-pink.vercel.app/');
+  res.redirect('https://book-my-event-pink.vercel.app',req.user
+  );
   }
 );
 
