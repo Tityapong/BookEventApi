@@ -15,8 +15,11 @@ router.get(
 
   //   user: req.user 
   // });
-  req.redirect('https://book-my-event-pink.vercel.app/');
+  res.redirect('https://book-my-event-pink.vercel.app/');
   }
 );
+
+// please write it redirect to frontend 
+
 
 module.exports = router;
