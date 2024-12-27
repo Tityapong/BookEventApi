@@ -13,7 +13,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL:"https://bookeventapi.onrender.com/users/auth/google/callback",
+      callbackURL:"http://localhost:8000/users/auth/google/callback",
     },
     (accessToken, refreshToken, profile, done) => {
       const { id, displayName, emails } = profile;
@@ -362,10 +362,28 @@ const getMe = (req, res) => {
   );
 };
 
+
 // User route
 const userRoute = (req, res) => {
   res.json({ message: `Welcome User, ${req.user.name}!` });
 };
+const getTotalUsers = (req, res) => {
+  db.query("SELECT COUNT(*) AS totalUsers FROM Users", (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
+
+    const totalUsers = results[0].totalUsers;
+    res.status(200).json({
+      message: "Total number of users retrieved successfully",
+      totalUsers: totalUsers,
+    });
+  });
+};
+
+
 
 // Export functions
 module.exports = {
@@ -378,4 +396,5 @@ module.exports = {
   getAllUsers,
   deleteUser,
   getMe,
+  getTotalUsers
 };

@@ -1,7 +1,6 @@
 const db = require("../config/db");
 
 const createService = (req, res) => {
-
   // Multer's `upload` middleware will handle file uploads
   const { category_id, name, description, price, size, location } = req.body;
   const supplier_id = req.user.id; // User ID from authentication
@@ -63,7 +62,6 @@ const createService = (req, res) => {
       .json({ message: "Failed to create service", error: error.message });
   }
 };
-
 
 // const createService = (req, res) => {
 //   console.log(" file: " , req.files);
@@ -414,6 +412,167 @@ const getServiceDetailById = (req, res) => {
   });
 };
 
+// for admin retive data
+
+// Admin can get all services
+const admingetAllServices = (req, res) => {
+  const query = `
+    SELECT s.id, s.name, s.description, s.price, s.size, s.location, s.image, u.name AS supplier_name, sc.name AS category_name
+    FROM services s
+    JOIN Users u ON s.supplier_id = u.id
+    JOIN service_categories sc ON s.category_id = sc.id
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
+
+    // Map image paths to URLs
+    const services = results.map((service) => ({
+      ...service,
+      images: service.image.split(",").map((image) => `${image.trim()}`),
+    }));
+
+    res.status(200).json({
+      message: "All services retrieved successfully",
+      services,
+    });
+  });
+};
+
+// Admin can update any service
+const updateServiceAdmin = (req, res) => {
+  const { service_id } = req.params;
+  const { category_id, name, description, price, size, location } = req.body;
+  const imagePaths = req.files.map((file) => file.path); // Cloudinary URLs
+
+  const query = `
+    UPDATE services
+    SET 
+      category_id = ?, 
+      name = ?, 
+      description = ?, 
+      price = ?, 
+      size = ?, 
+      location = ?,
+      image = ?
+    WHERE id = ?
+  `;
+
+  const values = [
+    category_id,
+    name,
+    description,
+    price,
+    size,
+    location,
+    imagePaths.join(","),
+    service_id,
+  ];
+
+  db.query(query, values, (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
+
+    if (results.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ message: "Service not found or unable to update" });
+    }
+
+    res.status(200).json({
+      message: "Service updated successfully",
+      service: {
+        service_id,
+        category_id,
+        name,
+        description,
+        price,
+        size,
+        location,
+        images: imagePaths,
+      },
+    });
+  });
+};
+
+
+// Admin can delete any service
+const deleteServiceAdmin = (req, res) => {
+  const { service_id } = req.params;
+
+  const query = `
+    DELETE FROM services WHERE id = ?
+  `;
+
+  db.query(query, [service_id], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    res.status(200).json({ message: "Service deleted successfully" });
+  });
+};
+
+
+// Admin can get total number of services
+const getTotalServicesAdmin = (req, res) => {
+  const query = `
+    SELECT COUNT(*) AS total_services FROM services
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    res.status(200).json({
+      message: "Total number of services retrieved successfully",
+      total_services: results[0].total_services,
+    });
+  });
+};
+
+
+// Admin: Get top services based on the number of bookings by category
+const getTopServices = (req, res) => {
+  const query = `
+    SELECT 
+      sc.name AS category_name, 
+      COUNT(b.id) AS bookings_count
+    FROM services s
+    JOIN service_categories sc ON s.category_id = sc.id
+    LEFT JOIN bookings b ON s.id = b.service_id
+    GROUP BY sc.name
+    ORDER BY bookings_count DESC
+    LIMIT 10
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    res.status(200).json({
+      message: "Top services by bookings retrieved successfully",
+      topServices: results,
+    });
+  });
+};
+
+
+
+
 module.exports = {
   createService,
   listOwnServices,
@@ -424,4 +583,9 @@ module.exports = {
   getTotalServices,
   getTotalPendingBookings,
   getServiceDetailById,
+  admingetAllServices,
+  updateServiceAdmin,
+  deleteServiceAdmin,
+  getTotalServicesAdmin,
+  getTopServices
 };

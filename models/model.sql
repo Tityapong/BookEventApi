@@ -34,11 +34,18 @@ CREATE TABLE services (
     FOREIGN KEY (supplier_id) REFERENCES booking.Users(id),
     FOREIGN KEY (category_id) REFERENCES service_categories(id)
 );
+
+
+
 SELECT * FROM Users;
 DELETE FROM Users WHERE id = 6;
 
 SELECT id, name FROM service_categories;
 SET SQL_SAFE_UPDATES = 1;
+SHOW CREATE TABLE Users;
+ALTER TABLE Users DROP COLUMN role_id;
+
+
 
 
 SET SQL_SAFE_UPDATES = 0;
@@ -47,12 +54,20 @@ UPDATE service_categories SET name = TRIM(name);
 
 
 
+SELECT * FROM bookings WHERE service_id = '2';
+DELETE FROM bookings WHERE service_id = '2';
 
 
+
+DESCRIBE services;
 
 SELECT * FROM services;
 ALTER TABLE services 
 ADD COLUMN location VARCHAR(255) NULL AFTER size;
+
+ALTER TABLE services
+MODIFY COLUMN image LONGTEXT;
+
 
 
 ALTER TABLE Users ADD COLUMN role_id INT NOT NULL DEFAULT 3;
@@ -62,6 +77,7 @@ SELECT * FROM bookings;
 ALTER TABLE bookings 
 MODIFY status ENUM('Pending', 'Confirmed', 'Rejected') NOT NULL DEFAULT 'Pending';
 
+UPDATE Users SET role_id = 3 WHERE role_id IS NULL;
 
 
 
@@ -77,11 +93,6 @@ CREATE TABLE bookings (
     FOREIGN KEY (user_id) REFERENCES booking.Users(id),
     FOREIGN KEY (service_id) REFERENCES services(id)
 );
-ALTER TABLE bookings
-ADD COLUMN contact_name VARCHAR(255) NOT NULL,
-ADD COLUMN contact_email VARCHAR(255) NOT NULL,
-ADD COLUMN contact_phone VARCHAR(50) NOT NULL;
-
 
 
 CREATE TABLE booking.notifications (
@@ -96,19 +107,58 @@ CREATE TABLE booking.notifications (
 );
 SELECT * FROM notifications;
 
-USE booking;
 
+USE booking;
+INSERT INTO booking.Users (name, email, password, role, is_approved, location)   
+VALUES ('Tityapong', 'tityapongs@gmail.com', '$2b$12$Z5GbrkCdknO1oJBQ8OwinezdQMgpA1qpkkD4ckaQKwSHkAzxZa3MO', 'Admin', TRUE, 'Phnom Penh');
 
 ALTER TABLE booking.Users
 ADD COLUMN is_approved BOOLEAN DEFAULT FALSE;
 
-SELECT * FROM Users LIMIT 0, 1000;
+
+
+UPDATE Users
+SET role = 'User'
+WHERE googleId = '110175582670742480492'; 
+
+
+SELECT * FROM Users WHERE role_id = 2;
+
+UPDATE Users
+SET role = 'Supplier'
+WHERE role_id = 2;
+
+
+
+
+SET SQL_SAFE_UPDATES = 1;
+SET SQL_SAFE_UPDATES = 0;
+
+
+
+UPDATE Users
+SET role = 'Admin'
+WHERE role_id = 1 AND id IS NOT NULL;
+
+UPDATE Users
+SET role = 'User'
+WHERE role_id = 3 AND id IS NOT NULL;
+
+UPDATE Users
+SET role = 'Supplier'
+WHERE role_id = 2 AND id IS NOT NULL;
 
 
 
 ALTER TABLE Users ADD COLUMN googleId VARCHAR(255) UNIQUE;
 ALTER TABLE Users MODIFY COLUMN password VARCHAR(255) NULL;
 ALTER TABLE Users MODIFY COLUMN location VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE bookings
+ADD COLUMN contact_name VARCHAR(255) NOT NULL,
+ADD COLUMN contact_email VARCHAR(255) NOT NULL,
+ADD COLUMN contact_phone VARCHAR(50) NOT NULL;
+
 
 
 INSERT INTO bookings (user_id, service_id, event_date, status)

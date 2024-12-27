@@ -11,6 +11,7 @@ const {
   getAllUsers,
   deleteUser,
   getMe,
+  getTotalUsers,
 } = require("../controllers/userController");
 const { authorize } = require("../middleware/authorize"); // Import role-based middleware
 
@@ -29,6 +30,9 @@ router.get("/user", authorize(["User", "Admin", "Supplier"]), userRoute); // Gen
 router.get("/me", authorize(["user"]), getMe); // Only users with the role 'User' can view their profile
 
 // Admin Role Management
+
+
+router.get("/total-users", authorize(["admin"]), getTotalUsers); 
 router.post("/change-role", authorize(["admin"]), changeRole); // Change user role (Admin only)
 router.get("/users", authorize(["admin"]), getAllUsers); // Admin: Get all users
 router.delete("/delete", authorize(["admin"]), deleteUser); // Admin: Delete a user

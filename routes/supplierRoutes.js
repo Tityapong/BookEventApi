@@ -43,5 +43,22 @@ router.get('/services/category/:category_name', supplierController.listServicesB
 router.get('/services/:service_id', supplierController.getServiceDetailById);
 
 
+// for admin 
+
+// Admin can get all services
+router.get('/admin/services', authorize(['admin']), supplierController.admingetAllServices);
+
+
+// Admin can update any service
+router.put('/admin/services/:service_id', authorize(['admin']), upload.array("images", 3), supplierController.updateServiceAdmin);
+
+// Admin can delete any service
+router.delete('/admin/services/:service_id', authorize(['admin']), supplierController.deleteServiceAdmin);
+
+// Admin can get the total number of services
+router.get('/admin/total-services', authorize(['admin']), supplierController.getTotalServicesAdmin);
+
+// Admin can get top services based on bookings
+router.get('/admin/top-services', authorize(['admin']), supplierController.getTopServices);
 
 module.exports = router;
