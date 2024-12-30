@@ -61,4 +61,6 @@ router.get('/admin/total-services', authorize(['admin']), supplierController.get
 // Admin can get top services based on bookings
 router.get('/admin/top-services', authorize(['admin']), supplierController.getTopServices);
 
+router.post('/services/:service_id/rating', authorize(['user']),  supplierController.createRating);
+
 module.exports = router;

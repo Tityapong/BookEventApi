@@ -255,7 +255,7 @@ const listServicesByCategory = (req, res) => {
   const normalizedCategoryName = category_name.trim().toLowerCase(); // Normalize category name
 
   const query = `
-        SELECT s.id, s.name, s.description, s.price, s.size, s.location, s.image, sc.name AS category_name
+        SELECT s.id, s.name, s.description, s.price, s.size, s.location, s.average_rating, s.image, sc.name AS category_name
         FROM services s
         JOIN service_categories sc ON s.category_id = sc.id
         WHERE LOWER(sc.name) = ?
@@ -573,6 +573,118 @@ const getTopServices = (req, res) => {
 
 
 
+const createRating = (req, res) => {
+  const { service_id } = req.params;  // Service ID from URL params
+  const { rating, comment } = req.body;  // Rating and optional comment from request body
+  const user_id = req.user.id;  // User ID from authentication
+
+  // Ensure the rating is within the valid range (1-5)
+  if (rating < 1 || rating > 5) {
+    return res.status(400).json({ message: "Rating must be between 1 and 5." });
+  }
+
+  // Check if the user has already rated this service
+  const checkQuery = `
+    SELECT * FROM service_ratings
+    WHERE service_id = ? AND user_id = ?
+  `;
+  
+  db.query(checkQuery, [service_id, user_id], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    if (results.length > 0) {
+      // If the user has already rated the service, update the existing rating
+      const updateQuery = `
+        UPDATE service_ratings
+        SET rating = ?, comment = ?
+        WHERE service_id = ? AND user_id = ?
+      `;
+
+      db.query(updateQuery, [rating, comment, service_id, user_id], (err, results) => {
+        if (err) {
+          return res.status(500).json({ message: "Database error", error: err.message });
+        }
+
+        // Recalculate and update the average rating after updating the rating
+        const avgQuery = `
+          SELECT AVG(rating) AS average_rating
+          FROM service_ratings
+          WHERE service_id = ?
+        `;
+
+        db.query(avgQuery, [service_id], (err, avgResults) => {
+          if (err) {
+            return res.status(500).json({ message: "Failed to calculate average rating", error: err.message });
+          }
+
+          const average_rating = avgResults[0].average_rating;
+
+          // Update the service with the new average rating
+          const updateServiceRatingQuery = `
+            UPDATE services
+            SET average_rating = ?
+            WHERE id = ?
+          `;
+
+          db.query(updateServiceRatingQuery, [average_rating, service_id], (err, updateResults) => {
+            if (err) {
+              return res.status(500).json({ message: "Failed to update service rating", error: err.message });
+            }
+
+            res.status(200).json({ message: "Rating updated successfully" });
+          });
+        });
+      });
+    } else {
+      // Otherwise, insert a new rating
+      const insertQuery = `
+        INSERT INTO service_ratings (user_id, service_id, rating, comment)
+        VALUES (?, ?, ?, ?)
+      `;
+
+      db.query(insertQuery, [user_id, service_id, rating, comment], (err, results) => {
+        if (err) {
+          return res.status(500).json({ message: "Database error", error: err.message });
+        }
+
+        // After inserting the rating, update the average rating of the service
+        const avgQuery = `
+          SELECT AVG(rating) AS average_rating
+          FROM service_ratings
+          WHERE service_id = ?
+        `;
+
+        db.query(avgQuery, [service_id], (err, avgResults) => {
+          if (err) {
+            return res.status(500).json({ message: "Failed to calculate average rating", error: err.message });
+          }
+
+          const average_rating = avgResults[0].average_rating;
+
+          // Update the service with the new average rating
+          const updateServiceRatingQuery = `
+            UPDATE services
+            SET average_rating = ?
+            WHERE id = ?
+          `;
+
+          db.query(updateServiceRatingQuery, [average_rating, service_id], (err, updateResults) => {
+            if (err) {
+              return res.status(500).json({ message: "Failed to update service rating", error: err.message });
+            }
+
+            res.status(201).json({ message: "Rating added successfully" });
+          });
+        });
+      });
+    }
+  });
+};
+
+
+
 module.exports = {
   createService,
   listOwnServices,
@@ -587,5 +699,6 @@ module.exports = {
   updateServiceAdmin,
   deleteServiceAdmin,
   getTotalServicesAdmin,
-  getTopServices
+  getTopServices,
+  createRating
 };

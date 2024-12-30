@@ -1,164 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Top Services by Bookings</title>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> <!-- Material Icons -->
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin-top: 50px;
-      background-color: #f7f8fa;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Rating</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      /* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+}
 
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 30px;
-    }
+.container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
 
-    .category-card {
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      margin: 15px;
-      width: 240px;
-      text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
+h1 {
+  text-align: center;
+  font-size: 24px;
+}
 
-    .category-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    }
+.service-details {
+  margin-bottom: 20px;
+}
 
-    .category-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 20px;
-    }
+h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
 
-    .category-card .category-name {
-      font-size: 1.3rem;
-      font-weight: 500;
-      color: #333;
-      margin-top: 15px;
-    }
+p {
+  margin: 5px 0;
+}
 
-    .category-card .bookings-count {
-      font-size: 1rem;
-      color: #777;
-      margin-top: 5px;
-    }
+.rating-section {
+  margin-top: 20px;
+}
 
-    .category-card .top-icon {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background-color: #ff6347; /* Tomato color */
-      color: white;
-      font-size: 1.5rem;
-      border-radius: 50%;
-      padding: 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
+.stars {
+  font-size: 30px;
+  color: #ccc;
+  cursor: pointer;
+}
 
-    .category-card .category-image {
-      width: 70px;
-      height: 70px;
-      object-fit: cover;
-      border-radius: 50%;
-      margin-bottom: 15px;
-    }
+.star {
+  padding: 5px;
+  transition: color 0.3s;
+}
 
-    .category-card .category-icon {
-      font-size: 2.5rem;
-      color: #4CAF50;
-    }
+.star:hover, .star.selected {
+  color: gold;
+}
 
-    .category-card .category-icon {
-      font-size: 2rem;
-      color: #2196F3;
-    }
-  </style>
+textarea {
+  width: 100%;
+  height: 100px;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  resize: none;
+}
+
+button {
+  padding: 10px 20px;
+  margin-top: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+#thank-you-message {
+  text-align: center;
+  margin-top: 20px;
+  color: green;
+}
+
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Rate the Service</h1>
+        <div class="service-details">
+            <h2>Wedding Photography</h2>
+            <p><strong>Description:</strong> A professional photographer for your wedding.</p>
+            <p><strong>Price:</strong> $200</p>
+            <p><strong>Event Date:</strong> December 25, 2024</p>
+        </div>
 
-  <h1>Top Services by Bookings</h1>
-  <div id="top-services" class="category-list">
-    <!-- Top service categories will be displayed here -->
-  </div>
+        <!-- Rating Section -->
+        <div class="rating-section">
+            <h3>Rate This Service:</h3>
+            
+            <!-- Star Rating System -->
+            <div class="stars">
+                <span class="star" data-value="1">&#9733;</span>
+                <span class="star" data-value="2">&#9733;</span>
+                <span class="star" data-value="3">&#9733;</span>
+                <span class="star" data-value="4">&#9733;</span>
+                <span class="star" data-value="5">&#9733;</span>
+            </div>
 
-  <script>
-    // Function to fetch and display top services based on bookings count
-    async function getTopServices() {
-      try {
-        const response = await fetch("http://localhost:8000/supplier/admin/top-services", {
-          method: "GET",
-          headers: {
-            "Authorization": "eyJhbG", // Add your JWT token here
-          },
-        });
+            <!-- Comment Box -->
+            <textarea id="rating-comment" placeholder="Leave a comment (optional)"></textarea>
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch top services');
-        }
+            <!-- Submit Button -->
+            <button id="submit-rating">Submit Rating</button>
+        </div>
 
-        const data = await response.json();
-        const topServices = data.topServices;
+        <!-- Thank You Message -->
+        <div id="thank-you-message" style="display:none;">
+            <h3>Thank you for your feedback!</h3>
+        </div>
+    </div>
+    <script>
+      // script.js
 
-        if (topServices.length === 0) {
-          document.getElementById("top-services").innerHTML = "<p>No top services found.</p>";
-          return;
-        }
+document.addEventListener('DOMContentLoaded', function () {
+  const stars = document.querySelectorAll('.star');
+  const submitButton = document.getElementById('submit-rating');
+  const thankYouMessage = document.getElementById('thank-you-message');
+  let selectedRating = 0;
 
-        // Clear any existing content
-        const categoryList = document.getElementById("top-services");
-        categoryList.innerHTML = '';
+  // Handle star selection
+  stars.forEach(star => {
+      star.addEventListener('click', function () {
+          selectedRating = parseInt(this.getAttribute('data-value'));
+          updateStars(selectedRating);
+      });
 
-        // Display the top services (services with highest bookings)
-        topServices.forEach(service => {
-          const serviceCard = document.createElement("div");
-          serviceCard.classList.add("category-card");
+      star.addEventListener('mouseover', function () {
+          let hoverRating = parseInt(this.getAttribute('data-value'));
+          updateStars(hoverRating);
+      });
 
-          // Add the 'top-service' class if this is a top service
-          if (service.bookings_count > 50) {  // Example: Top service threshold
-            serviceCard.classList.add("top-service");
-            serviceCard.innerHTML = `
-              <div class="top-icon material-icons">star</div> <!-- Top Service icon -->
-              <div class="category-image">
-                <img src="${service.icon || 'https://via.placeholder.com/70'}" alt="${service.name}" />
-              </div>
-              <div class="category-name">${service.category_name}</div>
-              <div class="bookings-count">${service.bookings_count} bookings</div>
-            `;
+      star.addEventListener('mouseout', function () {
+          updateStars(selectedRating);
+      });
+  });
+
+  // Update the star colors
+  function updateStars(rating) {
+      stars.forEach(star => {
+          if (parseInt(star.getAttribute('data-value')) <= rating) {
+              star.classList.add('selected');
           } else {
-            serviceCard.innerHTML = `
-              <div class="category-icon material-icons">favorite_border</div>
-              <div class="category-name">${service.category_name}</div>
-              <div class="bookings-count">${service.bookings_count} bookings</div>
-            `;
+              star.classList.remove('selected');
           }
+      });
+  }
 
-          categoryList.appendChild(serviceCard);
-        });
-      } catch (error) {
-        console.error('Error fetching top services:', error);
-        document.getElementById("top-services").innerHTML = "<p>Error fetching top services. Please try again later.</p>";
+  // Submit the rating
+  submitButton.addEventListener('click', function () {
+      if (selectedRating === 0) {
+          alert("Please select a rating.");
+          return;
       }
-    }
 
-    // Call the function to fetch top services on page load
-    getTopServices();
-  </script>
+      const comment = document.getElementById('rating-comment').value;
 
+      // Simulate submitting the rating to the database
+      console.log(`Rating: ${selectedRating} stars`);
+      console.log(`Comment: ${comment}`);
+
+      // Show the thank you message and hide the rating section
+      thankYouMessage.style.display = 'block';
+      document.querySelector('.rating-section').style.display = 'none';
+  });
+});
+
+    </script>
+
+    <script src="script.js"></script>
 </body>
 </html>
