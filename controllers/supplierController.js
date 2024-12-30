@@ -357,6 +357,7 @@ const getServiceDetailById = (req, res) => {
             s.size, 
             s.location, 
             s.image, 
+            s.average_rating,
             sc.name AS category_name,
             u.name AS supplier_name,
             u.email AS supplier_email,
@@ -400,6 +401,7 @@ const getServiceDetailById = (req, res) => {
         price: service.price,
         size: service.size,
         location: service.location,
+        average_rating: service.average_rating,
         category: service.category_name,
         supplier: {
           name: service.supplier_name,
