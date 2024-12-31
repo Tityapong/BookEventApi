@@ -686,6 +686,51 @@ const createRating = (req, res) => {
 };
 
 
+const getRecommendedServices = (req, res) => {
+  // Query to get the services with the highest average rating
+  const query = `
+    SELECT 
+      s.id, 
+      s.name, 
+      s.description, 
+      s.price, 
+      s.size, 
+      s.location, 
+      s.average_rating, 
+      s.image, 
+      sc.name AS category_name
+    FROM services s
+    JOIN service_categories sc ON s.category_id = sc.id
+    JOIN service_ratings sr ON s.id = sr.service_id
+    GROUP BY s.id
+    HAVING AVG(sr.rating) >= 4.0  -- Include services with average rating >= 4.0
+    ORDER BY AVG(sr.rating) DESC, COUNT(sr.id) DESC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    // Map image paths to URLs and format the response for services
+    const services = results.map((service) => {
+      const images = service.image 
+        ? service.image.split(",").map((image) => `${image.trim()}`)
+        : [];
+
+      return {
+        ...service,
+        images: images, // Attach full image URLs
+      };
+    });
+
+    res.status(200).json({
+      message: "Recommended services retrieved successfully",
+      services,
+    });
+  });
+};
+
 
 module.exports = {
   createService,
@@ -702,5 +747,6 @@ module.exports = {
   deleteServiceAdmin,
   getTotalServicesAdmin,
   getTopServices,
-  createRating
+  createRating,
+  getRecommendedServices
 };

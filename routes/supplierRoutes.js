@@ -42,6 +42,8 @@ router.get('/services/category/:category_name', supplierController.listServicesB
   // GET /supplier/services/:service_id - Get service details by ID (publicly available)
 router.get('/services/:service_id', supplierController.getServiceDetailById);
 
+router.get('/recommended-services', supplierController.getRecommendedServices);
+
 
 // for admin 
 
