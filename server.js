@@ -11,6 +11,8 @@ const authRoutes = require("./routes/socaleRoute");
 const serviceRoutes = require('./routes/serviceRoute');
 const supplierRoutes = require('./routes/supplierRoutes');
 const bookingRoute = require('./routes/bookingRoutes');
+const contactRoute = require('./routes/contactRoutes')
+
 const connectCloudinary = require('./config/cloudinary');
 // const upload = require("./middleware/upload");
 // const connectCloudinary = require('./config/cloudinary');
@@ -47,12 +49,14 @@ app.use(passport.session());
 
 
 // Routes
+
 app.use('/users/auth', authRoutes);
 app.use("/api/users", userRoutes);
 app.use('/', serviceRoutes);
 // app.use('/uploads', express.static('uploads'));
 app.use('/supplier', supplierRoutes);
 app.use('/api', bookingRoute);
+app.use('/api', contactRoute);
 
 
 // app.post("/debug-files", upload.array("images", 3), (req, res) => {

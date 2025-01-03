@@ -47,6 +47,7 @@ ALTER TABLE Users DROP COLUMN role_id;
 
 
 
+SELECT * FROM services;
 
 SET SQL_SAFE_UPDATES = 0;
 
@@ -107,6 +108,32 @@ CREATE TABLE booking.notifications (
 );
 SELECT * FROM notifications;
 
+SELECT * FROM bookings;
+SELECT * FROM services;
+
+SELECT * FROM services;
+
+
+SELECT * FROM service_ratings ;
+CREATE TABLE service_ratings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    service_id INT NOT NULL,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),  -- Rating scale between 1 and 5
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES booking.Users(id),
+    FOREIGN KEY (service_id) REFERENCES services(id)
+);
+
+ALTER TABLE services
+ADD COLUMN average_rating DECIMAL(3, 2) DEFAULT NULL;
+UPDATE services
+SET average_rating = (
+  SELECT AVG(rating) FROM service_ratings WHERE service_id = ?
+)
+WHERE id = ?
+
 
 USE booking;
 INSERT INTO booking.Users (name, email, password, role, is_approved, location)   
@@ -163,3 +190,14 @@ ADD COLUMN contact_phone VARCHAR(50) NOT NULL;
 
 INSERT INTO bookings (user_id, service_id, event_date, status)
 VALUES (3, 1, '2024-12-25', 'Pending');
+
+
+
+
+CREATE TABLE contact (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
