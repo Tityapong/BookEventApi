@@ -1,11 +1,13 @@
 {
-	"folders": [
-		{
-			"path": "../../../BookMyEvent"
-		},
-		{
-			"path": ".."
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": "../../../BookMyEvent"
+    },
+    {
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "liveServer.settings.multiRootWorkspaceName": "BookMyEvent"
+  }
 }

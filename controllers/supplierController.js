@@ -337,6 +337,33 @@ const getTotalPendingBookings = (req, res) => {
   });
 };
 
+// Get Total Bookings for Supplier
+const getTotalBookings = (req, res) => {
+  const supplier_id = req.user.id;
+
+  const query = `
+        SELECT COUNT(*) AS total_bookings
+        FROM bookings
+        WHERE service_id IN (
+            SELECT id FROM services WHERE supplier_id = ?
+        )
+    `;
+
+  db.query(query, [supplier_id], (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
+    }
+
+    res.status(200).json({
+      message: "Total bookings count retrieved successfully",
+      total_bookings: results[0].total_bookings,
+    });
+  });
+};
+
+
 // Get service details by ID
 // const getServiceDetailById = (req, res) => {
 //   const { service_id } = req.params; // Extract service ID from URL parameters
@@ -817,5 +844,6 @@ module.exports = {
   getTotalServicesAdmin,
   getTopServices,
   createRating,
-  getRecommendedServices
+  getRecommendedServices,
+  getTotalBookings
 };

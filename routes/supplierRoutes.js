@@ -32,6 +32,7 @@ router.delete(
     supplierController.deleteService
 );
 
+router.get('/services/total', authorize(['supplier']), supplierController.getTotalBookings);
 router.get('/services/total', authorize(['supplier']), supplierController.getTotalServices);
 router.get('/bookings/pending', authorize(['supplier']), supplierController.getTotalPendingBookings);
 // GET /supplier/all-services - List all services (publicly available)
