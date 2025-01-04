@@ -275,7 +275,7 @@ const changeRole = (req, res) => {
 const getAllUsers = (req, res) => {
   // This check is now handled in the `authorize` middleware
   db.query(
-    "SELECT id, name, email, role, phone, location FROM Users",
+    "SELECT id, name, email, role, phone, location , created_at AS joined FROM Users",
     (err, results) => {
       if (err) {
         return res
