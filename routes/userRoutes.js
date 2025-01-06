@@ -12,6 +12,7 @@ const {
   deleteUser,
   getMe,
   getTotalUsers,
+  logout,
 } = require("../controllers/userController");
 const { authorize } = require("../middleware/authorize"); // Import role-based middleware
 
@@ -19,7 +20,8 @@ const router = express.Router();
 
 // Public Routes
 router.post("/register", register); // Register a new user
-router.post("/login", login);       // Login a user
+router.post("/login", login); 
+router.post('/logout' , logout)      // Login a user
 
 // Protected Routes (require authentication and specific roles)
 router.get("/admin", authorize(["Admin"]), adminRoute); // Admin-only route
