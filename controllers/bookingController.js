@@ -389,5 +389,84 @@ const rejectBooking = async (req, res) => {
 
 
 
+const getReceiptBooking = async (req, res) => {
+  try {
+    const userId = req.user.id; // Authenticated user's ID from the JWT token
+    const { id } = req.params; // Booking ID from the URL parameters
 
-module.exports = { getSupplierBookings, createBooking  , acceptBooking , getUserBookings , getUserNotifications , rejectBooking} ;
+    // Query to fetch a specific booking and associated service details for the authenticated user
+    const query = `
+      SELECT 
+        b.id AS booking_id,
+        b.event_date,
+        b.status,
+        b.contact_name,
+        b.contact_email,
+        b.contact_phone,
+        b.created_at AS booking_time,
+        b.updated_at,
+        s.id AS service_id,
+        s.name AS service_name,
+        s.location AS service_location,
+        s.price AS service_price,
+        u.name AS supplier_name,
+        u.email AS supplier_email
+      FROM bookings b
+      JOIN services s ON b.service_id = s.id
+      JOIN Users u ON s.supplier_id = u.id
+      WHERE b.id = ? AND b.user_id = ? -- Fetch the specific booking by booking ID and user ID
+      LIMIT 1
+    `;
+
+    // Execute the query with the user's ID and booking ID
+    const [results] = await pool.promise().query(query, [id, userId]);
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found or not authorized.',
+      });
+    }
+
+    const booking = results[0];
+
+    // Format the response to include booking and service details
+    const bookingDetails = {
+      booking_id: booking.booking_id,
+      event_date: booking.event_date,
+      status: booking.status,
+      contact_name: booking.contact_name,
+      contact_email: booking.contact_email,
+      contact_phone: booking.contact_phone,
+      booking_time: booking.booking_time,
+      updated_at: booking.updated_at,
+      service: {
+        id: booking.service_id,
+        name: booking.service_name,
+        location: booking.service_location,
+        price: booking.service_price,
+        supplier_name: booking.supplier_name,
+        supplier_email: booking.supplier_email,
+      },
+    };
+
+    res.status(200).json({
+      success: true,
+      message: 'Receipt booking retrieved successfully.',
+      data: bookingDetails,
+    });
+  } catch (error) {
+    console.error('Error fetching receipt booking:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching the receipt booking.',
+      error: error.message,
+    });
+  }
+};
+
+
+
+
+
+module.exports = { getSupplierBookings, createBooking  , acceptBooking , getUserBookings , getReceiptBooking, getUserNotifications , rejectBooking} ;
