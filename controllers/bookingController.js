@@ -217,13 +217,18 @@ const getUserBookings = async (req, res) => {
         b.id AS booking_id,
         b.event_date,
         b.status,
-        b.created_at,
+        b.contact_name,
+        b.contact_email,
+        b.contact_phone,
+        b.created_at AS booking_time,
         b.updated_at,
         s.id AS service_id,
         s.name AS service_name,
         s.location AS service_location,
         s.price AS service_price,
-        u.name AS supplier_name
+        u.name AS supplier_name,
+        u.email AS supplier_email
+
       FROM bookings b
       JOIN services s ON b.service_id = s.id
       JOIN Users u ON s.supplier_id = u.id
@@ -239,14 +244,19 @@ const getUserBookings = async (req, res) => {
       booking_id: booking.booking_id,
       event_date: booking.event_date,
       status: booking.status,
-      created_at: booking.created_at,
+      contact_name: booking.contact_name,
+      contact_email: booking.contact_email,
+      contact_phone: booking.contact_phone,
+      booking_time: booking.booking_time,
       updated_at: booking.updated_at,
       service: {
         id: booking.service_id,
         name: booking.service_name,
+
         location: booking.service_location,
         price: booking.service_price,
         supplier_name: booking.supplier_name,
+        supplier_email: booking.supplier_email,
       },
     }));
 

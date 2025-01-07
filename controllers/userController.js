@@ -386,11 +386,7 @@ const getTotalUsers = (req, res) => {
 
 // Logout function
 const logout = (req, res) => {
-  // You can clear the session on the server if you're using sessions,
-  // or simply let the client side handle the token invalidation.
-  // For JWT, the client just needs to remove the token from their storage (localStorage or cookies).
-
-  // If you are using cookies for JWT
+ 
   res.clearCookie('token'); // Clear the token cookie if used
   
   // If you are storing JWT in localStorage on the frontend, the frontend should handle it.
