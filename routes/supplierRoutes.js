@@ -60,6 +60,8 @@ router.delete('/admin/services/:service_id', authorize(['admin']), supplierContr
 
 // Admin can get the total number of services
 router.get('/admin/total-services', authorize(['admin']), supplierController.getTotalServicesAdmin);
+router.get('/admin/total-bookings', authorize(['admin']), supplierController.getTotalBookingsAdmin);
+
 
 // Admin can get top services based on bookings
 router.get('/admin/top-services', authorize(['admin']), supplierController.getTopServices);

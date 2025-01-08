@@ -828,6 +828,26 @@ const getRecommendedServices = (req, res) => {
 };
 
 
+// Admin: Get total bookings for all services
+const getTotalBookingsAdmin = (req, res) => {
+  const query = `
+    SELECT COUNT(*) AS total_bookings
+    FROM bookings
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    res.status(200).json({
+      message: "Total bookings count retrieved successfully",
+      total_bookings: results[0].total_bookings,
+    });
+  });
+};
+
+
 module.exports = {
   createService,
   listOwnServices,
@@ -845,5 +865,6 @@ module.exports = {
   getTopServices,
   createRating,
   getRecommendedServices,
-  getTotalBookings
+  getTotalBookings,
+  getTotalBookingsAdmin
 };
