@@ -167,9 +167,7 @@ const listOwnServices = (req, res) => {
     // Map image paths to URLs
     const services = results.map((service) => ({
       ...service,
-      images: service.image
-        .split(",")
-        .map((image) => `${req.protocol}://${req.get("host")}/${image}`),
+      images: service.image.split(",").map((image) => `${image}`),
     }));
 
     res.status(200).json({
@@ -363,7 +361,6 @@ const getTotalBookings = (req, res) => {
   });
 };
 
-
 // Get service details by ID
 // const getServiceDetailById = (req, res) => {
 //   const { service_id } = req.params; // Extract service ID from URL parameters
@@ -376,14 +373,14 @@ const getTotalBookings = (req, res) => {
 //   }
 
 //   const query = `
-//         SELECT 
-//             s.id, 
-//             s.name, 
-//             s.description, 
-//             s.price, 
-//             s.size, 
-//             s.location, 
-//             s.image, 
+//         SELECT
+//             s.id,
+//             s.name,
+//             s.description,
+//             s.price,
+//             s.size,
+//             s.location,
+//             s.image,
 //             s.average_rating,
 //             sc.name AS category_name,
 //             u.name AS supplier_name,
@@ -600,7 +597,6 @@ const updateServiceAdmin = (req, res) => {
   });
 };
 
-
 // Admin can delete any service
 const deleteServiceAdmin = (req, res) => {
   const { service_id } = req.params;
@@ -611,7 +607,9 @@ const deleteServiceAdmin = (req, res) => {
 
   db.query(query, [service_id], (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
 
     if (results.affectedRows === 0) {
@@ -622,7 +620,6 @@ const deleteServiceAdmin = (req, res) => {
   });
 };
 
-
 // Admin can get total number of services
 const getTotalServicesAdmin = (req, res) => {
   const query = `
@@ -631,7 +628,9 @@ const getTotalServicesAdmin = (req, res) => {
 
   db.query(query, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
 
     res.status(200).json({
@@ -640,7 +639,6 @@ const getTotalServicesAdmin = (req, res) => {
     });
   });
 };
-
 
 // Admin: Get top services based on the number of bookings by category
 const getTopServices = (req, res) => {
@@ -658,7 +656,9 @@ const getTopServices = (req, res) => {
 
   db.query(query, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
 
     res.status(200).json({
@@ -668,13 +668,10 @@ const getTopServices = (req, res) => {
   });
 };
 
-
-
-
 const createRating = (req, res) => {
-  const { service_id } = req.params;  // Service ID from URL params
-  const { rating, comment } = req.body;  // Rating and optional comment from request body
-  const user_id = req.user.id;  // User ID from authentication
+  const { service_id } = req.params; // Service ID from URL params
+  const { rating, comment } = req.body; // Rating and optional comment from request body
+  const user_id = req.user.id; // User ID from authentication
 
   // Ensure the rating is within the valid range (1-5)
   if (rating < 1 || rating > 5) {
@@ -686,10 +683,12 @@ const createRating = (req, res) => {
     SELECT * FROM service_ratings
     WHERE service_id = ? AND user_id = ?
   `;
-  
+
   db.query(checkQuery, [service_id, user_id], (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
 
     if (results.length > 0) {
@@ -700,41 +699,63 @@ const createRating = (req, res) => {
         WHERE service_id = ? AND user_id = ?
       `;
 
-      db.query(updateQuery, [rating, comment, service_id, user_id], (err, results) => {
-        if (err) {
-          return res.status(500).json({ message: "Database error", error: err.message });
-        }
+      db.query(
+        updateQuery,
+        [rating, comment, service_id, user_id],
+        (err, results) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({ message: "Database error", error: err.message });
+          }
 
-        // Recalculate and update the average rating after updating the rating
-        const avgQuery = `
+          // Recalculate and update the average rating after updating the rating
+          const avgQuery = `
           SELECT AVG(rating) AS average_rating
           FROM service_ratings
           WHERE service_id = ?
         `;
 
-        db.query(avgQuery, [service_id], (err, avgResults) => {
-          if (err) {
-            return res.status(500).json({ message: "Failed to calculate average rating", error: err.message });
-          }
+          db.query(avgQuery, [service_id], (err, avgResults) => {
+            if (err) {
+              return res
+                .status(500)
+                .json({
+                  message: "Failed to calculate average rating",
+                  error: err.message,
+                });
+            }
 
-          const average_rating = avgResults[0].average_rating;
+            const average_rating = avgResults[0].average_rating;
 
-          // Update the service with the new average rating
-          const updateServiceRatingQuery = `
+            // Update the service with the new average rating
+            const updateServiceRatingQuery = `
             UPDATE services
             SET average_rating = ?
             WHERE id = ?
           `;
 
-          db.query(updateServiceRatingQuery, [average_rating, service_id], (err, updateResults) => {
-            if (err) {
-              return res.status(500).json({ message: "Failed to update service rating", error: err.message });
-            }
+            db.query(
+              updateServiceRatingQuery,
+              [average_rating, service_id],
+              (err, updateResults) => {
+                if (err) {
+                  return res
+                    .status(500)
+                    .json({
+                      message: "Failed to update service rating",
+                      error: err.message,
+                    });
+                }
 
-            res.status(200).json({ message: "Rating updated successfully" });
+                res
+                  .status(200)
+                  .json({ message: "Rating updated successfully" });
+              }
+            );
           });
-        });
-      });
+        }
+      );
     } else {
       // Otherwise, insert a new rating
       const insertQuery = `
@@ -742,45 +763,64 @@ const createRating = (req, res) => {
         VALUES (?, ?, ?, ?)
       `;
 
-      db.query(insertQuery, [user_id, service_id, rating, comment], (err, results) => {
-        if (err) {
-          return res.status(500).json({ message: "Database error", error: err.message });
-        }
+      db.query(
+        insertQuery,
+        [user_id, service_id, rating, comment],
+        (err, results) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({ message: "Database error", error: err.message });
+          }
 
-        // After inserting the rating, update the average rating of the service
-        const avgQuery = `
+          // After inserting the rating, update the average rating of the service
+          const avgQuery = `
           SELECT AVG(rating) AS average_rating
           FROM service_ratings
           WHERE service_id = ?
         `;
 
-        db.query(avgQuery, [service_id], (err, avgResults) => {
-          if (err) {
-            return res.status(500).json({ message: "Failed to calculate average rating", error: err.message });
-          }
+          db.query(avgQuery, [service_id], (err, avgResults) => {
+            if (err) {
+              return res
+                .status(500)
+                .json({
+                  message: "Failed to calculate average rating",
+                  error: err.message,
+                });
+            }
 
-          const average_rating = avgResults[0].average_rating;
+            const average_rating = avgResults[0].average_rating;
 
-          // Update the service with the new average rating
-          const updateServiceRatingQuery = `
+            // Update the service with the new average rating
+            const updateServiceRatingQuery = `
             UPDATE services
             SET average_rating = ?
             WHERE id = ?
           `;
 
-          db.query(updateServiceRatingQuery, [average_rating, service_id], (err, updateResults) => {
-            if (err) {
-              return res.status(500).json({ message: "Failed to update service rating", error: err.message });
-            }
+            db.query(
+              updateServiceRatingQuery,
+              [average_rating, service_id],
+              (err, updateResults) => {
+                if (err) {
+                  return res
+                    .status(500)
+                    .json({
+                      message: "Failed to update service rating",
+                      error: err.message,
+                    });
+                }
 
-            res.status(201).json({ message: "Rating added successfully" });
+                res.status(201).json({ message: "Rating added successfully" });
+              }
+            );
           });
-        });
-      });
+        }
+      );
     }
   });
 };
-
 
 const getRecommendedServices = (req, res) => {
   // Query to get the services with the highest average rating
@@ -805,12 +845,14 @@ const getRecommendedServices = (req, res) => {
 
   db.query(query, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
 
     // Map image paths to URLs and format the response for services
     const services = results.map((service) => {
-      const images = service.image 
+      const images = service.image
         ? service.image.split(",").map((image) => `${image.trim()}`)
         : [];
 
@@ -827,7 +869,6 @@ const getRecommendedServices = (req, res) => {
   });
 };
 
-
 // Admin: Get total bookings for all services
 const getTotalBookingsAdmin = (req, res) => {
   const query = `
@@ -837,7 +878,9 @@ const getTotalBookingsAdmin = (req, res) => {
 
   db.query(query, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Database error", error: err.message });
     }
 
     res.status(200).json({
@@ -846,7 +889,6 @@ const getTotalBookingsAdmin = (req, res) => {
     });
   });
 };
-
 
 module.exports = {
   createService,
@@ -866,5 +908,5 @@ module.exports = {
   createRating,
   getRecommendedServices,
   getTotalBookings,
-  getTotalBookingsAdmin
+  getTotalBookingsAdmin,
 };
