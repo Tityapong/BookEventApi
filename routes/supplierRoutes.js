@@ -58,6 +58,9 @@ router.put('/admin/services/:service_id', authorize(['admin']), upload.array("im
 // Admin can delete any service
 router.delete('/admin/services/:service_id', authorize(['admin']), supplierController.deleteServiceAdmin);
 
+
+router.get('/admin/services/:service_id', authorize(['admin']), supplierController.admingetServiceById);
+
 // Admin can get the total number of services
 router.get('/admin/total-services', authorize(['admin']), supplierController.getTotalServicesAdmin);
 router.get('/admin/total-bookings', authorize(['admin']), supplierController.getTotalBookingsAdmin);
