@@ -1,6 +1,9 @@
 // Import the configured pool
 const pool = require("../config/db"); // Ensure this path is correct
 
+// const moment = require("moment");
+const moment = require("moment-timezone");
+
 /**
  * Controller to fetch supplier bookings
  */
@@ -139,6 +142,92 @@ const getSupplierBookings = async (req, res) => {
 /**
  * Controller to create a new booking by a user
  */
+// const createBooking = async (req, res) => {
+//   try {
+//     // Destructure the booking details from the request body
+//     const { service_id, event_date, name, email, phone } = req.body;
+
+//     // Input Validation
+//     if (!service_id || !event_date || !name || !email || !phone) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Service ID, event date, name, email, and phone are required.",
+//       });
+//     }
+
+//     console.log("Booking request data:", {
+//       service_id,
+//       event_date,
+//       name,
+//       email,
+//       phone,
+//     });
+
+//     const userId = req.user.id; // Use authenticated user's ID
+
+//     // Check if the service exists
+//     const [serviceResults] = await pool
+//       .promise()
+//       .query("SELECT * FROM services WHERE id = ?", [service_id]);
+//     if (serviceResults.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Service not found.",
+//       });
+//     }
+
+//     const service = serviceResults[0];
+//     const supplierId = service.supplier_id;
+
+//     // Insert the booking into the database with contact information
+//     const [insertBookingResult] = await pool.promise().query(
+//       `INSERT INTO bookings 
+//         (user_id, service_id, event_date, status, contact_name, contact_email, contact_phone, created_at, updated_at) 
+//        VALUES 
+//         (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+//       [userId, service_id, event_date, "Pending", name, email, phone]
+//     );
+
+//     console.log("Booking insertion result:", insertBookingResult);
+
+//     // Fetch the newly created booking
+//     const [bookingResults] = await pool
+//       .promise()
+//       .query("SELECT * FROM bookings WHERE id = ?", [
+//         insertBookingResult.insertId,
+//       ]);
+//     const booking = bookingResults[0];
+
+//     res.status(201).json({
+//       success: true,
+//       message: "Booking created successfully.",
+//       data: {
+//         id: booking.id,
+//         service_id: booking.service_id,
+//         event_date: booking.event_date,
+//         status: booking.status,
+//         contact_name: booking.contact_name,
+//         contact_email: booking.contact_email,
+//         contact_phone: booking.contact_phone,
+//         created_at: booking.created_at,
+//         updated_at: booking.updated_at,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error creating booking:", error.message, error.stack);
+//     res.status(500).json({
+//       success: false,
+//       message: "An error occurred while creating the booking.",
+//       error: error.message, // Detailed error reporting
+//     });
+//   }
+// };
+
+
+
+
+
+
 const createBooking = async (req, res) => {
   try {
     // Destructure the booking details from the request body
@@ -176,13 +265,19 @@ const createBooking = async (req, res) => {
     const service = serviceResults[0];
     const supplierId = service.supplier_id;
 
+    // **Cambodia's time zone is Asia/Phnom_Penh**
+    const localTimeZone = "Asia/Phnom_Penh"; // Cambodia time zone
+    
+    // Convert event_date to UTC for storing in the database
+    const formattedEventDate = moment.tz(event_date, "YYYY-MM-DD HH:mm:ss", localTimeZone).utc().format("YYYY-MM-DD HH:mm:ss");
+
     // Insert the booking into the database with contact information
     const [insertBookingResult] = await pool.promise().query(
       `INSERT INTO bookings 
         (user_id, service_id, event_date, status, contact_name, contact_email, contact_phone, created_at, updated_at) 
        VALUES 
         (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [userId, service_id, event_date, "Pending", name, email, phone]
+      [userId, service_id, formattedEventDate, "Pending", name, email, phone]
     );
 
     console.log("Booking insertion result:", insertBookingResult);
@@ -195,13 +290,16 @@ const createBooking = async (req, res) => {
       ]);
     const booking = bookingResults[0];
 
+    // Convert the event date back to Cambodia local time for display
+    const eventDateInLocalTime = moment.utc(booking.event_date).tz(localTimeZone).format("YYYY-MM-DD HH:mm:ss");
+
     res.status(201).json({
       success: true,
       message: "Booking created successfully.",
       data: {
         id: booking.id,
         service_id: booking.service_id,
-        event_date: booking.event_date,
+        event_date: eventDateInLocalTime,  // Display in Cambodia local time zone
         status: booking.status,
         contact_name: booking.contact_name,
         contact_email: booking.contact_email,
@@ -219,6 +317,8 @@ const createBooking = async (req, res) => {
     });
   }
 };
+
+
 
 const acceptBooking = async (req, res) => {
   try {
