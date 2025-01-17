@@ -240,7 +240,7 @@ const changeRole = (req, res) => {
 
   // Ensure the role is valid
   const newRoleLower = newRole.toLowerCase();
-  if (!["supplier", "user"].includes(newRoleLower)) {
+  if (!["supplier","admin" , "user"].includes(newRoleLower)) {
     return res.status(400).json({ message: "Invalid role" });
   }
 
