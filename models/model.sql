@@ -201,3 +201,7 @@ CREATE TABLE contact (
     message TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE Users
+ADD COLUMN telegram_username VARCHAR(255) NULL,
+ADD COLUMN chat_id BIGINT NULL;

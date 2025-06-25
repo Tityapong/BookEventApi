@@ -123,7 +123,7 @@ const register = async (req, res) => {
 
   // Insert user into the database
   db.query(
-    "INSERT INTO Users (name, email, password, role, phone, location, isApproved) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO Users (name, email, password, role, phone, location, is_approved) VALUES (?, ?, ?, ?, ?, ?, ?)",
     [
       name,
       email,

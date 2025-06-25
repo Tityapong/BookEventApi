@@ -20,6 +20,9 @@ const connectCloudinary = require('./config/cloudinary');
 // // Connect to Cloudinary
 // connectCloudinary();
 
+const bot = require("./controllers/telegramBotWebhook");
+
+
 
 
 
@@ -69,3 +72,4 @@ const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+

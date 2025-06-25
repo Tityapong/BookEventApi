@@ -46,7 +46,10 @@ router.get('/services/:service_id', supplierController.getServiceDetailById);
 router.get('/recommended-services', supplierController.getRecommendedServices);
 
 
-// for admin 
+// for admin
+
+
+
 
 // Admin can get all services
 router.get('/admin/services', authorize(['admin']), supplierController.admingetAllServices);
@@ -69,6 +72,6 @@ router.get('/admin/total-bookings', authorize(['admin']), supplierController.get
 // Admin can get top services based on bookings
 router.get('/admin/top-services', authorize(['admin']), supplierController.getTopServices);
 
-router.post('/services/:service_id/rating', authorize(['user']),  supplierController.createRating);
+router.post('/services/:service_id/rating', authorize(["user" ,"supplier" ,"admin"  ]),  supplierController.createRating);
 
 module.exports = router;

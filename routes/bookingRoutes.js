@@ -19,16 +19,16 @@ const { authorize } = require("../middleware/authorize"); // Assuming middleware
 router.get("/bookings", authorize(["supplier"]), getSupplierBookings);
 
 // Route for users to create a new booking
-router.post("/bookings", authorize(["user"]), createBooking);
+router.post("/bookings", authorize(["user" ,"supplier" ,"admin"]), createBooking);
 // PUT /supplier/bookings/:id/accept - Accept a booking
 router.put("/bookings/:id/accept", authorize(["supplier"]), acceptBooking);
 
 router.put("/bookings/:id/reject", authorize(["supplier"]), rejectBooking);
 
-router.get("/user/bookings", authorize(["user"]), getUserBookings);
+router.get("/user/bookings", authorize(["user", "admin", "supplier"]), getUserBookings);
 
-router.get("/user/receipt-booking/:id", authorize(["user"]), getReceiptBooking);
+router.get("/user/receipt-booking/:id", authorize(["user", "admin", "supplier"]), getReceiptBooking);
 
-router.get("/user/notifications", authorize(["user"]), getUserNotifications);
+router.get("/user/notifications", authorize(["user", "admin", "supplier"]), getUserNotifications);
 
 module.exports = router;
